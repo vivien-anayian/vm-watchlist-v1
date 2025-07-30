@@ -49,6 +49,22 @@ const VisitorLog: React.FC = () => {
     newStatus: string;
   } | null>(null);
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.status-dropdown-container') && !target.closest('.action-menu-container')) {
+        setShowStatusDropdown(null);
+        setShowActionMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Handle toast messages from navigation state
   useEffect(() => {
     if (location.state?.showToast) {
@@ -544,7 +560,7 @@ const VisitorLog: React.FC = () => {
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="relative">
+                    <div className="relative status-dropdown-container">
                       <button 
                         onClick={() => setShowStatusDropdown(showStatusDropdown === visitor.id ? null : visitor.id)}
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(visitor.status)} space-x-1 hover:opacity-80 transition-opacity`}
@@ -554,7 +570,7 @@ const VisitorLog: React.FC = () => {
                       </button>
                       
                       {showStatusDropdown === visitor.id && (
-                        <div className="absolute top-full left-0 mt-1 w-32 bg-white rounded-md shadow-lg z-20 border border-gray-200">
+                        <div className="absolute top-full left-0 mt-1 w-32 bg-white rounded-md shadow-lg z-30 border border-gray-200">
                           <div className="py-1">
                             {getStatusOptions(visitor.status).map((status) => (
                               <button
@@ -601,7 +617,7 @@ const VisitorLog: React.FC = () => {
                     {visitor.registeredFrom}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="relative">
+                    <div className="relative action-menu-container">
                       <button 
                         onClick={() => setShowActionMenu(showActionMenu === visitor.id ? null : visitor.id)}
                         className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1 text-xs sm:text-sm"
@@ -611,7 +627,7 @@ const VisitorLog: React.FC = () => {
                       </button>
                       
                       {showActionMenu === visitor.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 border border-gray-200">
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-30 border border-gray-200">
                           <div className="py-1">
                             <button
                               onClick={() => {
