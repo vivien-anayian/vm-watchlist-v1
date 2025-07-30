@@ -113,10 +113,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistModalProps> = ({
         }
         break;
       case 'primaryPhone':
-        // Only validate format if phone is provided
-        if (value.trim() && !/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/[\s\-\(\)]/g, ''))) {
-          newErrors.primaryPhone = 'Please enter a valid phone number';
-        }
+        // No validation required for phone
         break;
     }
     
