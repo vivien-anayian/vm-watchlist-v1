@@ -1,6 +1,8 @@
-# 🔐 Visitor Watchlist Management System
+# 🔐 Visitor Watchlist Management System - Part 2 (Expanded Version)
 
 A comprehensive React TypeScript application for managing visitor access control and security watchlists in corporate environments.
+
+> **Note:** This is the expanded version (Part 2) of the VM Watchlist system. For the stable Version 1, see the `v1-stable` branch.
 
 ## 🚀 Quick Start
 
