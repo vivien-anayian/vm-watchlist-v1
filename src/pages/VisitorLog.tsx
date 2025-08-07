@@ -194,6 +194,10 @@ const VisitorLog: React.FC = () => {
         return ['Validated', 'No show', 'Canceled'];
       case 'Validated':
         return ['Upcoming', 'Checked in', 'No show', 'Canceled'];
+      case 'No show':
+        return ['Upcoming', 'Canceled'];
+      case 'Canceled':
+        return ['Upcoming'];
       default:
         return [];
     }
