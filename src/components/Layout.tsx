@@ -133,7 +133,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Footer */}
         <div className="p-4 border-t border-gray-800 text-xs text-gray-500">
           <div>VTS Activate © 2023</div>
-          <div>v5.123.0</div>
+          <div>
+            v5.123.0
+            {import.meta.env.VITE_COMMIT_SHA && (
+              <span className="ml-2 text-gray-400">commit {import.meta.env.VITE_COMMIT_SHA}</span>
+            )}
+          </div>
         </div>
       </div>
 
