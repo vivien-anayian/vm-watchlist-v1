@@ -109,7 +109,10 @@ const CreateNewVisit: React.FC = () => {
         arrival: startTime,
         departure: endTime,
         host: hostName || 'Alex Smith',
+        hostEmail: 'alex.smith@techcorp.com',
+        hostPhone: '555-0200',
         hostCompany: tenantCompany || 'TechCorp Industries',
+        hostCompanyLocation: '1500 Technology Drive, 15th Floor, Austin, TX',
         floor: `Floor ${floor || '15'}`,
         watchlistMatch: !!watchlistMatch,
         watchlistLevel: watchlistMatch?.level

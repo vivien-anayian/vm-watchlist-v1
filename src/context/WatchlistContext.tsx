@@ -32,7 +32,10 @@ export interface VisitorEntry {
   arrival: string;
   departure: string;
   host: string;
+  hostEmail: string;
+  hostPhone: string;
   hostCompany: string;
+  hostCompanyLocation: string;
   floor: string;
   watchlistMatch?: boolean;
   watchlistLevel?: string;
@@ -66,6 +69,8 @@ interface WatchlistContextType {
   updateVisitorStatus: (id: string, status: VisitorEntry['status']) => void;
   updateVisitorConfiguration: (config: Partial<VisitorConfiguration>) => void;
   checkWatchlistMatch: (firstName: string, lastName: string) => WatchlistEntry | null;
+  getMatchedFields: (visitorName: string, visitorEmail: string, watchlistEntry: WatchlistEntry) => string[];
+  getWatchlistEntryForVisitor: (visitorId: string) => WatchlistEntry | null;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -371,7 +376,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:00 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
+      hostEmail: 'liz.tenant@30eastmcdonald.com',
+      hostPhone: '555-0201',
       hostCompany: '30 East McDonald',
+      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
@@ -386,7 +394,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:00 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
+      hostEmail: 'liz.tenant@30eastmcdonald.com',
+      hostPhone: '555-0201',
       hostCompany: '30 East McDonald',
+      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
       floor: 'Floor 11, Floor 12',
       watchlistMatch: true,
       watchlistLevel: 'Medium risk'
@@ -401,7 +412,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:30 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
+      hostEmail: 'liz.tenant@30eastmcdonald.com',
+      hostPhone: '555-0201',
       hostCompany: '30 East McDonald',
+      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: false
     },
@@ -415,7 +429,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:00 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Chelsea Chan',
+      hostEmail: 'chelsea.chan@crownproperties.com',
+      hostPhone: '555-0202',
       hostCompany: 'Crown Properties',
+      hostCompanyLocation: '200 East 41st Street, 24th Floor, New York, NY',
       floor: 'Floor 24',
       watchlistMatch: true,
       watchlistLevel: 'Low risk'
@@ -430,7 +447,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:00 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Chelsea Chan',
+      hostEmail: 'chelsea.chan@crownproperties.com',
+      hostPhone: '555-0202',
       hostCompany: 'Crown Properties',
+      hostCompanyLocation: '200 East 41st Street, 24th Floor, New York, NY',
       floor: 'Floor 24',
       watchlistMatch: true,
       watchlistLevel: 'VIP'
@@ -445,7 +465,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:30 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
+      hostEmail: 'liz.tenant@30eastmcdonald.com',
+      hostPhone: '555-0201',
       hostCompany: '30 East McDonald',
+      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: false
     },
@@ -459,7 +482,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:30 AM CDT',
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
+      hostEmail: 'liz.tenant@30eastmcdonald.com',
+      hostPhone: '555-0201',
       hostCompany: '30 East McDonald',
+      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
@@ -474,7 +500,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '8:30 AM CDT',
       departure: '4:00 PM CDT',
       host: 'Michael Davis',
+      hostEmail: 'michael.davis@techcorp.com',
+      hostPhone: '555-0203',
       hostCompany: 'TechCorp Industries',
+      hostCompanyLocation: '1500 Technology Drive, 15th Floor, Austin, TX',
       floor: 'Floor 15',
       watchlistMatch: false
     },
@@ -488,7 +517,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '10:00 AM CDT',
       departure: '3:00 PM CDT',
       host: 'Sarah Johnson',
+      hostEmail: 'sarah.johnson@globalenterprises.com',
+      hostPhone: '555-0204',
       hostCompany: 'Global Enterprises',
+      hostCompanyLocation: '800 Corporate Plaza, 8th Floor, Denver, CO',
       floor: 'Floor 8',
       watchlistMatch: false,
       wasWatchlistFlagged: true
@@ -503,7 +535,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '2:00 PM CDT',
       departure: '6:00 PM CDT',
       host: 'Robert Chen',
+      hostEmail: 'robert.chen@innovationlabs.com',
+      hostPhone: '555-0205',
       hostCompany: 'Innovation Labs',
+      hostCompanyLocation: '2200 Innovation Way, 22nd Floor, San Francisco, CA',
       floor: 'Floor 22',
       watchlistMatch: true,
       watchlistLevel: 'Medium risk'
@@ -518,7 +553,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '1:00 PM CDT',
       departure: '5:00 PM CDT',
       host: 'Lisa Wang',
+      hostEmail: 'lisa.wang@designstudio.com',
+      hostPhone: '555-0206',
       hostCompany: 'Design Studio',
+      hostCompanyLocation: '500 Creative Boulevard, 5th Floor, Portland, OR',
       floor: 'Floor 5',
       watchlistMatch: false
     },
@@ -532,7 +570,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '9:15 AM CDT',
       departure: '4:30 PM CDT',
       host: 'Amanda Rodriguez',
+      hostEmail: 'amanda.rodriguez@marketingplus.com',
+      hostPhone: '555-0207',
       hostCompany: 'Marketing Plus',
+      hostCompanyLocation: '1800 Marketing Avenue, 18th Floor, Miami, FL',
       floor: 'Floor 18',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
@@ -691,6 +732,42 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     }) || null;
   };
 
+  const getMatchedFields = (visitorName: string, visitorEmail: string, watchlistEntry: WatchlistEntry): string[] => {
+    const matchedFields: string[] = [];
+    const [visitorFirstName, ...visitorLastNameParts] = visitorName.split(' ');
+    const visitorLastName = visitorLastNameParts.join(' ');
+    
+    // Check first name match
+    if (entry.firstName.toLowerCase() === visitorFirstName.toLowerCase() ||
+        entry.alternativeFirstNames.some(alt => alt.toLowerCase() === visitorFirstName.toLowerCase())) {
+      matchedFields.push(`First Name (${visitorFirstName})`);
+    }
+    
+    // Check last name match
+    if (entry.lastName.toLowerCase() === visitorLastName.toLowerCase() ||
+        entry.alternativeLastNames.some(alt => alt.toLowerCase() === visitorLastName.toLowerCase())) {
+      matchedFields.push(`Last Name (${visitorLastName})`);
+    }
+    
+    // Check email match
+    if (entry.primaryEmail.toLowerCase() === visitorEmail.toLowerCase() ||
+        entry.additionalEmails.some(email => email.toLowerCase() === visitorEmail.toLowerCase())) {
+      matchedFields.push(`Email (${visitorEmail})`);
+    }
+    
+    return matchedFields;
+  };
+
+  const getWatchlistEntryForVisitor = (visitorId: string): WatchlistEntry | null => {
+    const visitor = getVisitorById(visitorId);
+    if (!visitor || !visitor.watchlistMatch) return null;
+    
+    const [firstName, ...lastNameParts] = visitor.name.split(' ');
+    const lastName = lastNameParts.join(' ');
+    
+    return checkWatchlistMatch(firstName, lastName);
+  };
+
   return (
     <WatchlistContext.Provider value={{
       watchlistEntries,
@@ -707,7 +784,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       updateVisitorWatchlistStatus,
       updateVisitorStatus,
       updateVisitorConfiguration,
-      checkWatchlistMatch
+      checkWatchlistMatch,
+      getMatchedFields,
+      getWatchlistEntryForVisitor
     }}>
       {children}
     </WatchlistContext.Provider>

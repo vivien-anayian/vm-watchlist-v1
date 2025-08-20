@@ -485,9 +485,12 @@ const VisitorLog: React.FC = () => {
                     {visitor.departure}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900">
+                    <Link 
+                      to={`/visitor-log/view/${visitor.id}`}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+                    >
                       {visitor.name}
-                    </span>
+                    </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {visitor.watchlistMatch && visitor.watchlistLevel ? (
