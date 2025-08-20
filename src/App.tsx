@@ -260,6 +260,14 @@ const VisitorDetails: React.FC = () => {
             </div>
 
             {visitor.watchlistMatch && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Watchlist Match</h4>
+                <p className="text-sm text-gray-900">Yes</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
