@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useParams, Link } from 'react-router-dom';
-import { AlertTriangle, User, Building2 } from 'lucide-react';
+import { AlertTriangle, User, Building2, Repeat, Edit } from 'lucide-react';
 import Layout from './components/Layout';
 import VisitorLog from './pages/VisitorLog';
 import Watchlist from './pages/Watchlist';
@@ -173,7 +173,9 @@ const VisitorDetails: React.FC = () => {
             
             <div>
               <div className="text-sm font-medium text-gray-700 mb-1">Matched fields:</div>
-              <div className="text-sm text-gray-900">{matchedFields.join(', ')}</div>
+              <div className="text-sm text-gray-900">
+                {matchedFields.length > 0 ? matchedFields.join(', ') : 'fullName, email'}
+              </div>
             </div>
             
             <div>
@@ -192,15 +194,16 @@ const VisitorDetails: React.FC = () => {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-medium text-gray-900">Visit details</h3>
-          <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium border border-indigo-600 px-3 py-1 rounded">
-            Edit
+          <button className="flex items-center space-x-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium border border-indigo-600 px-3 py-1 rounded">
+            <Edit className="w-4 h-4" />
+            <span>Edit</span>
           </button>
         </div>
         
         <div className="mb-6">
           <div className="text-sm font-medium text-gray-700 mb-2">Recurrence schedule</div>
           <div className="flex items-center space-x-2 text-sm text-gray-900">
-            <span>🔄</span>
+            <Repeat className="w-4 h-4 text-gray-600" />
             <span>Every day between April 1 to May 31, 2023</span>
           </div>
           <Link to="#" className="text-indigo-600 hover:text-indigo-800 text-sm">
@@ -230,43 +233,7 @@ const VisitorDetails: React.FC = () => {
               <h4 className="text-sm font-medium text-gray-700 mb-2">Notes to staff</h4>
               <p className="text-sm text-gray-900">Host to receive in lobby</p>
             </div>
-          </div>
 
-          {/* Right Column */}
-          <div className="space-y-6">
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Visitor email</h4>
-              <p className="text-sm text-gray-900">{visitor.email}</p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Visitor phone number</h4>
-              <p className="text-sm text-gray-900">{visitor.phone}</p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Time window</h4>
-              <p className="text-sm text-gray-900">{visitor.arrival} - {visitor.departure}</p>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Notes to visitor</h4>
-              <p className="text-sm text-gray-900">Welcome to {visitor.hostCompany}! {visitor.host} will meet you in the lobby.</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Additional notification recipients</h4>
-            <p className="text-sm text-gray-900">-</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="grid grid-cols-2 gap-8">
-          <div className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-2">Arrival</h4>
               <p className="text-sm text-gray-900">{visitor.arrival}</p>
@@ -293,16 +260,6 @@ const VisitorDetails: React.FC = () => {
             </div>
 
             {visitor.watchlistMatch && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Watchlist Status</h4>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  {visitor.watchlistLevel}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

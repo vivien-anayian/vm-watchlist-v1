@@ -377,9 +377,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
       hostEmail: 'liz.tenant@30eastmcdonald.com',
-      hostPhone: '555-0201',
+      hostPhone: '555-0201 ex. 1001',
       hostCompany: '30 East McDonald',
-      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
+      hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
@@ -395,9 +395,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
       hostEmail: 'liz.tenant@30eastmcdonald.com',
-      hostPhone: '555-0201',
+      hostPhone: '555-0201 ex. 1001',
       hostCompany: '30 East McDonald',
-      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
+      hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11, Floor 12',
       watchlistMatch: true,
       watchlistLevel: 'Medium risk'
@@ -413,9 +413,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
       hostEmail: 'liz.tenant@30eastmcdonald.com',
-      hostPhone: '555-0201',
+      hostPhone: '555-0201 ex. 1001',
       hostCompany: '30 East McDonald',
-      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
+      hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: false
     },
@@ -430,9 +430,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Chelsea Chan',
       hostEmail: 'chelsea.chan@crownproperties.com',
-      hostPhone: '555-0202',
+      hostPhone: '555-0202 ex. 2001',
       hostCompany: 'Crown Properties',
-      hostCompanyLocation: '200 East 41st Street, 24th Floor, New York, NY',
+      hostCompanyLocation: '200 East 41st Street, 24 Fl, New York, NY',
       floor: 'Floor 24',
       watchlistMatch: true,
       watchlistLevel: 'Low risk'
@@ -448,9 +448,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Chelsea Chan',
       hostEmail: 'chelsea.chan@crownproperties.com',
-      hostPhone: '555-0202',
+      hostPhone: '555-0202 ex. 2001',
       hostCompany: 'Crown Properties',
-      hostCompanyLocation: '200 East 41st Street, 24th Floor, New York, NY',
+      hostCompanyLocation: '200 East 41st Street, 24 Fl, New York, NY',
       floor: 'Floor 24',
       watchlistMatch: true,
       watchlistLevel: 'VIP'
@@ -466,9 +466,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
       hostEmail: 'liz.tenant@30eastmcdonald.com',
-      hostPhone: '555-0201',
+      hostPhone: '555-0201 ex. 1001',
       hostCompany: '30 East McDonald',
-      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
+      hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: false
     },
@@ -483,9 +483,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Liz Tenant',
       hostEmail: 'liz.tenant@30eastmcdonald.com',
-      hostPhone: '555-0201',
+      hostPhone: '555-0201 ex. 1001',
       hostCompany: '30 East McDonald',
-      hostCompanyLocation: '30 East McDonald Street, 11th Floor, Chicago, IL',
+      hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
@@ -501,9 +501,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '4:00 PM CDT',
       host: 'Michael Davis',
       hostEmail: 'michael.davis@techcorp.com',
-      hostPhone: '555-0203',
+      hostPhone: '555-0203 ex. 3001',
       hostCompany: 'TechCorp Industries',
-      hostCompanyLocation: '1500 Technology Drive, 15th Floor, Austin, TX',
+      hostCompanyLocation: '1500 Technology Drive, 15 Fl, Austin, TX',
       floor: 'Floor 15',
       watchlistMatch: false
     },
@@ -518,9 +518,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '3:00 PM CDT',
       host: 'Sarah Johnson',
       hostEmail: 'sarah.johnson@globalenterprises.com',
-      hostPhone: '555-0204',
+      hostPhone: '555-0204 ex. 4001',
       hostCompany: 'Global Enterprises',
-      hostCompanyLocation: '800 Corporate Plaza, 8th Floor, Denver, CO',
+      hostCompanyLocation: '800 Corporate Plaza, 8 Fl, Denver, CO',
       floor: 'Floor 8',
       watchlistMatch: false,
       wasWatchlistFlagged: true
@@ -536,9 +536,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '6:00 PM CDT',
       host: 'Robert Chen',
       hostEmail: 'robert.chen@innovationlabs.com',
-      hostPhone: '555-0205',
+      hostPhone: '555-0205 ex. 5001',
       hostCompany: 'Innovation Labs',
-      hostCompanyLocation: '2200 Innovation Way, 22nd Floor, San Francisco, CA',
+      hostCompanyLocation: '2200 Innovation Way, 22 Fl, San Francisco, CA',
       floor: 'Floor 22',
       watchlistMatch: true,
       watchlistLevel: 'Medium risk'
@@ -554,9 +554,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '5:00 PM CDT',
       host: 'Lisa Wang',
       hostEmail: 'lisa.wang@designstudio.com',
-      hostPhone: '555-0206',
+      hostPhone: '555-0206 ex. 6001',
       hostCompany: 'Design Studio',
-      hostCompanyLocation: '500 Creative Boulevard, 5th Floor, Portland, OR',
+      hostCompanyLocation: '500 Creative Boulevard, 5 Fl, Portland, OR',
       floor: 'Floor 5',
       watchlistMatch: false
     },
@@ -571,9 +571,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       departure: '4:30 PM CDT',
       host: 'Amanda Rodriguez',
       hostEmail: 'amanda.rodriguez@marketingplus.com',
-      hostPhone: '555-0207',
+      hostPhone: '555-0207 ex. 7001',
       hostCompany: 'Marketing Plus',
-      hostCompanyLocation: '1800 Marketing Avenue, 18th Floor, Miami, FL',
+      hostCompanyLocation: '1800 Marketing Avenue, 18 Fl, Miami, FL',
       floor: 'Floor 18',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
@@ -738,20 +738,20 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     const visitorLastName = visitorLastNameParts.join(' ');
     
     // Check first name match
-    if (entry.firstName.toLowerCase() === visitorFirstName.toLowerCase() ||
-        entry.alternativeFirstNames.some(alt => alt.toLowerCase() === visitorFirstName.toLowerCase())) {
+    if (watchlistEntry.firstName.toLowerCase() === visitorFirstName.toLowerCase() ||
+        watchlistEntry.alternativeFirstNames.some(alt => alt.toLowerCase() === visitorFirstName.toLowerCase())) {
       matchedFields.push(`First Name (${visitorFirstName})`);
     }
     
     // Check last name match
-    if (entry.lastName.toLowerCase() === visitorLastName.toLowerCase() ||
-        entry.alternativeLastNames.some(alt => alt.toLowerCase() === visitorLastName.toLowerCase())) {
+    if (watchlistEntry.lastName.toLowerCase() === visitorLastName.toLowerCase() ||
+        watchlistEntry.alternativeLastNames.some(alt => alt.toLowerCase() === visitorLastName.toLowerCase())) {
       matchedFields.push(`Last Name (${visitorLastName})`);
     }
     
     // Check email match
-    if (entry.primaryEmail.toLowerCase() === visitorEmail.toLowerCase() ||
-        entry.additionalEmails.some(email => email.toLowerCase() === visitorEmail.toLowerCase())) {
+    if (watchlistEntry.primaryEmail.toLowerCase() === visitorEmail.toLowerCase() ||
+        watchlistEntry.additionalEmails.some(email => email.toLowerCase() === visitorEmail.toLowerCase())) {
       matchedFields.push(`Email (${visitorEmail})`);
     }
     
