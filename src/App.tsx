@@ -41,7 +41,7 @@ const VisitorDetails: React.FC = () => {
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">{visitor.name}</h1>
         <p className="text-sm text-gray-500 mt-2">
-          Visit scheduled for {visitor.date} from {visitor.expectedArrival} to {visitor.expectedDeparture}
+          Visit scheduled for {visitor.date} from {visitor.arrival} to {visitor.departure}
         </p>
       </div>
 
@@ -87,23 +87,28 @@ const VisitorDetails: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Expected Arrival</h4>
-              <p className="text-sm text-gray-900">{visitor.expectedArrival}</p>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Arrival</h4>
+              <p className="text-sm text-gray-900">{visitor.arrival}</p>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Expected Departure</h4>
-              <p className="text-sm text-gray-900">{visitor.expectedDeparture}</p>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Departure</h4>
+              <p className="text-sm text-gray-900">{visitor.departure}</p>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Submitted By</h4>
-              <p className="text-sm text-gray-900">{visitor.submittedBy}</p>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Host</h4>
+              <p className="text-sm text-gray-900">{visitor.host}</p>
             </div>
 
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Registered From</h4>
-              <p className="text-sm text-gray-900">{visitor.registeredFrom}</p>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Host Company</h4>
+              <p className="text-sm text-gray-900">{visitor.hostCompany}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Floor</h4>
+              <p className="text-sm text-gray-900">{visitor.floor}</p>
             </div>
 
             {visitor.watchlistMatch && (

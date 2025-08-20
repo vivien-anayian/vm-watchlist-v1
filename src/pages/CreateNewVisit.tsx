@@ -12,10 +12,11 @@ interface CreatedVisitor {
   phone: string;
   status: 'Checked in' | 'Upcoming' | 'No show' | 'Validated' | 'Canceled';
   date: string;
-  expectedArrival: string;
-  expectedDeparture: string;
-  submittedBy: string;
-  registeredFrom: string;
+  arrival: string;
+  departure: string;
+  host: string;
+  hostCompany: string;
+  floor: string;
   watchlistMatch?: boolean;
   watchlistLevel?: string;
 }
@@ -105,10 +106,11 @@ const CreateNewVisit: React.FC = () => {
         phone: '555-0123', // Default phone for demo
         status: 'Upcoming' as const,
         date: selectedDate,
-        expectedArrival: startTime,
-        expectedDeparture: endTime,
-        submittedBy: hostName || 'Alex Smith',
-        registeredFrom: 'New VM form',
+        arrival: startTime,
+        departure: endTime,
+        host: hostName || 'Alex Smith',
+        hostCompany: tenantCompany || 'TechCorp Industries',
+        floor: `Floor ${floor || '15'}`,
         watchlistMatch: !!watchlistMatch,
         watchlistLevel: watchlistMatch?.level
       });

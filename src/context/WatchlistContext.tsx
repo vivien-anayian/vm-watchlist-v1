@@ -29,10 +29,11 @@ export interface VisitorEntry {
   phone: string;
   status: 'Checked in' | 'Upcoming' | 'No show' | 'Validated' | 'Canceled';
   date: string;
-  expectedArrival: string;
-  expectedDeparture: string;
-  submittedBy: string;
-  registeredFrom: string;
+  arrival: string;
+  departure: string;
+  host: string;
+  hostCompany: string;
+  floor: string;
   watchlistMatch?: boolean;
   watchlistLevel?: string;
   wasWatchlistFlagged?: boolean; // Track if visitor was ever flagged
@@ -362,162 +363,177 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [visitorEntries, setVisitorEntries] = useState<VisitorEntry[]>([
     {
       id: '1',
-      name: 'John Renolds',
-      email: 'john.renolds@company.com',
+      name: 'Benjamin Baker',
+      email: 'benjamin.baker@company.com',
       phone: '555-0123',
       status: 'Upcoming',
-      date: 'Apr 12, 2023',
-      expectedArrival: '6:00 AM EDT',
-      expectedDeparture: '11:00 AM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: false
-    },
-    {
-      id: '2',
-      name: 'Wesley McDonald',
-      email: 'wesley.mcdonald@company.com',
-      phone: '555-0124',
-      status: 'Upcoming',
-      date: 'Apr 12, 2023',
-      expectedArrival: '6:00 AM EDT',
-      expectedDeparture: '11:00 AM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
+      date: 'June 17, 2025',
+      arrival: '9:00 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Liz Tenant',
+      hostCompany: '30 East McDonald',
+      floor: 'Floor 11',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
     },
     {
+      id: '2',
+      name: 'Isabella Adams',
+      email: 'isabella.adams@company.com',
+      phone: '555-0124',
+      status: 'Checked in',
+      date: 'June 17, 2025',
+      arrival: '9:00 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Liz Tenant',
+      hostCompany: '30 East McDonald',
+      floor: 'Floor 11, Floor 12',
+      watchlistMatch: true,
+      watchlistLevel: 'Medium risk'
+    },
+    {
       id: '3',
-      name: 'Marcus Rodriguez',
-      email: 'marcus.rodriguez@techcorp.com',
+      name: 'Debby Clark',
+      email: 'debby.clark@company.com',
       phone: '555-0126',
-      status: 'Validated',
-      date: 'Apr 12, 2023',
-      expectedArrival: '9:00 AM EDT',
-      expectedDeparture: '12:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: false, // No longer flagged after validation
-      wasWatchlistFlagged: true // But was originally flagged
+      status: 'Upcoming',
+      date: 'June 17, 2025',
+      arrival: '9:30 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Liz Tenant',
+      hostCompany: '30 East McDonald',
+      floor: 'Floor 11',
+      watchlistMatch: false
     },
     {
       id: '4',
-      name: 'Jen McGee',
-      email: 'jen.mcgee@company.com',
+      name: 'Sophia Scott',
+      email: 'sophia.scott@company.com',
       phone: '555-0127',
-      status: 'Validated',
-      date: 'Apr 12, 2023',
-      expectedArrival: '9:00 AM EDT',
-      expectedDeparture: '12:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: false
+      status: 'No show',
+      date: 'June 17, 2025',
+      arrival: '9:00 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Chelsea Chan',
+      hostCompany: 'Crown Properties',
+      floor: 'Floor 24',
+      watchlistMatch: true,
+      watchlistLevel: 'Low risk'
     },
     {
       id: '5',
-      name: 'Cassie Strouse',
-      email: 'cassie.strouse@company.com',
+      name: 'Joshua Lewis',
+      email: 'joshua.lewis@company.com',
       phone: '555-0128',
       status: 'Upcoming',
-      date: 'Apr 12, 2023',
-      expectedArrival: '10:00 AM EDT',
-      expectedDeparture: '12:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: false
+      date: 'June 17, 2025',
+      arrival: '9:00 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Chelsea Chan',
+      hostCompany: 'Crown Properties',
+      floor: 'Floor 24',
+      watchlistMatch: true,
+      watchlistLevel: 'VIP'
     },
     {
       id: '6',
-      name: 'Timothy Pond',
-      email: 'timothy.pond@company.com',
+      name: 'Anna Clark',
+      email: 'anna.clark@company.com',
       phone: '555-0129',
-      status: 'Canceled',
-      date: 'Apr 12, 2023',
-      expectedArrival: '10:00 AM EDT',
-      expectedDeparture: '12:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
+      status: 'Upcoming',
+      date: 'June 17, 2025',
+      arrival: '9:30 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Liz Tenant',
+      hostCompany: '30 East McDonald',
+      floor: 'Floor 11',
       watchlistMatch: false
     },
     {
       id: '7',
-      name: 'Sneha Pathya',
-      email: 'sneha.pathya@company.com',
+      name: 'James Black',
+      email: 'james.black@company.com',
       phone: '555-0130',
       status: 'Upcoming',
-      date: 'Apr 12, 2023',
-      expectedArrival: '10:00 AM EDT',
-      expectedDeparture: '5:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
+      date: 'June 17, 2025',
+      arrival: '9:30 AM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Liz Tenant',
+      hostCompany: '30 East McDonald',
+      floor: 'Floor 11',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
     },
     {
       id: '8',
-      name: 'Emma Fox', 
+      name: 'Emma Fox',
       email: 'emma.fox@company.com',
       phone: '555-0131',
       status: 'Checked in',
-      date: 'Apr 12, 2023',
-      expectedArrival: '6:00 AM EDT',
-      expectedDeparture: '11:00 AM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
+      date: 'June 17, 2025',
+      arrival: '8:30 AM CDT',
+      departure: '4:00 PM CDT',
+      host: 'Michael Davis',
+      hostCompany: 'TechCorp Industries',
+      floor: 'Floor 15',
       watchlistMatch: false
     },
     {
       id: '9',
-      name: 'Oliva Lin',
-      email: 'oliva.lin@company.com',
+      name: 'Oliver Martinez',
+      email: 'oliver.martinez@company.com',
       phone: '555-0132',
-      status: 'No show',
-      date: 'Apr 12, 2023',
-      expectedArrival: '6:00 AM EDT',
-      expectedDeparture: '11:00 AM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: false
+      status: 'Validated',
+      date: 'June 17, 2025',
+      arrival: '10:00 AM CDT',
+      departure: '3:00 PM CDT',
+      host: 'Sarah Johnson',
+      hostCompany: 'Global Enterprises',
+      floor: 'Floor 8',
+      watchlistMatch: false,
+      wasWatchlistFlagged: true
     },
     {
       id: '10',
-      name: 'Jennie Kim',
-      email: 'jennie.kim@company.com',
+      name: 'Maya Patel',
+      email: 'maya.patel@company.com',
       phone: '555-0133',
-      status: 'Checked in',
-      date: 'Apr 12, 2023',
-      expectedArrival: '6:00 AM EDT',
-      expectedDeparture: '11:00 AM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: false
+      status: 'Upcoming',
+      date: 'June 17, 2025',
+      arrival: '2:00 PM CDT',
+      departure: '6:00 PM CDT',
+      host: 'Robert Chen',
+      hostCompany: 'Innovation Labs',
+      floor: 'Floor 22',
+      watchlistMatch: true,
+      watchlistLevel: 'Medium risk'
     },
     {
       id: '11',
-      name: 'Jennifer Thompson',
-      email: 'jennifer.thompson@contractor.com',
+      name: 'Alex Thompson',
+      email: 'alex.thompson@company.com',
       phone: '555-0134',
-      status: 'Upcoming',
-      date: 'Apr 12, 2023',
-      expectedArrival: '11:00 AM EDT',
-      expectedDeparture: '3:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
-      watchlistMatch: true,
-      watchlistLevel: 'High risk'
+      status: 'Canceled',
+      date: 'June 17, 2025',
+      arrival: '1:00 PM CDT',
+      departure: '5:00 PM CDT',
+      host: 'Lisa Wang',
+      hostCompany: 'Design Studio',
+      floor: 'Floor 5',
+      watchlistMatch: false
     },
     {
       id: '12',
-      name: 'David Kim',
-      email: 'david.kim@supplier.net',
+      name: 'Ryan Foster',
+      email: 'ryan.foster@company.com',
       phone: '555-0135',
-      status: 'Upcoming',
-      date: 'Apr 12, 2023',
-      expectedArrival: '11:00 AM EDT',
-      expectedDeparture: '3:00 PM EDT',
-      submittedBy: 'Renee Berrigan',
-      registeredFrom: 'New VM form',
+      status: 'Checked in',
+      date: 'June 17, 2025',
+      arrival: '9:15 AM CDT',
+      departure: '4:30 PM CDT',
+      host: 'Amanda Rodriguez',
+      hostCompany: 'Marketing Plus',
+      floor: 'Floor 18',
       watchlistMatch: true,
       watchlistLevel: 'High risk'
     }
@@ -638,8 +654,8 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     const lowercaseQuery = query.toLowerCase();
     return visitorEntries.filter(visitor => 
       visitor.name.toLowerCase().includes(lowercaseQuery) ||
-      visitor.submittedBy.toLowerCase().includes(lowercaseQuery) ||
-      visitor.registeredFrom.toLowerCase().includes(lowercaseQuery)
+      visitor.host.toLowerCase().includes(lowercaseQuery) ||
+      visitor.hostCompany.toLowerCase().includes(lowercaseQuery)
     );
   };
 

@@ -10,15 +10,13 @@ import {
   ChevronRight,
   Lock,
   ChevronUp,
-  X
 } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
 import Toast from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 import StatusChangeConfirmationModal from '../components/StatusChangeConfirmationModal';
-import BulkStatusChangeConfirmationModal from '../components/BulkStatusChangeConfirmationModal';
 
-type SortField = 'status' | 'date' | 'expectedArrival' | 'expectedDeparture' | 'name' | 'submittedBy' | 'registeredFrom' | 'id';
+type SortField = 'status' | 'date' | 'arrival' | 'departure' | 'name' | 'watchlist' | 'host' | 'hostCompany' | 'floor' | 'id';
 type SortDirection = 'asc' | 'desc';
 
 const VisitorLog: React.FC = () => {
@@ -40,14 +38,6 @@ const VisitorLog: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [watchlistMatchFilter, setWatchlistMatchFilter] = useState<string>('');
-  
-  // Bulk selection state
-  const [selectedVisitors, setSelectedVisitors] = useState<Set<string>>(new Set());
-  const [showBulkConfirmationModal, setShowBulkConfirmationModal] = useState(false);
-  const [pendingBulkStatusChange, setPendingBulkStatusChange] = useState<{
-    visitorIds: string[];
-    newStatus: string;
-  } | null>(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -103,25 +93,33 @@ const VisitorLog: React.FC = () => {
           aValue = a.date;
           bValue = b.date;
           break;
-        case 'expectedArrival':
-          aValue = a.expectedArrival;
-          bValue = b.expectedArrival;
+        case 'arrival':
+          aValue = a.arrival;
+          bValue = b.arrival;
           break;
-        case 'expectedDeparture':
-          aValue = a.expectedDeparture;
-          bValue = b.expectedDeparture;
+        case 'departure':
+          aValue = a.departure;
+          bValue = b.departure;
           break;
         case 'name':
           aValue = a.name;
           bValue = b.name;
           break;
-        case 'submittedBy':
-          aValue = a.submittedBy;
-          bValue = b.submittedBy;
+        case 'watchlist':
+          aValue = a.watchlistLevel || '';
+          bValue = b.watchlistLevel || '';
           break;
-        case 'registeredFrom':
-          aValue = a.registeredFrom;
-          bValue = b.registeredFrom;
+        case 'host':
+          aValue = a.host;
+          bValue = b.host;
+          break;
+        case 'hostCompany':
+          aValue = a.hostCompany;
+          bValue = b.hostCompany;
+          break;
+        case 'floor':
+          aValue = a.floor;
+          bValue = b.floor;
           break;
         case 'id':
           aValue = parseInt(a.id);
@@ -140,9 +138,6 @@ const VisitorLog: React.FC = () => {
     });
     
     setFilteredVisitors(results);
-    
-    // Clear selections when filters change
-    setSelectedVisitors(new Set());
   }, [searchQuery, searchVisitors, sortField, sortDirection, statusFilter, watchlistMatchFilter]);
 
   const handleSort = (field: SortField) => {
@@ -219,6 +214,21 @@ const VisitorLog: React.FC = () => {
     setShowStatusDropdown(null);
   };
 
+  const getWatchlistLevelColor = (level?: string) => {
+    switch (level) {
+      case 'High risk':
+        return 'bg-red-100 text-red-800';
+      case 'Medium risk':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Low risk':
+        return 'bg-blue-100 text-blue-800';
+      case 'VIP':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return '';
+    }
+  };
+
   const confirmStatusChange = () => {
     if (pendingStatusChange) {
       updateVisitorStatus(pendingStatusChange.visitorId, pendingStatusChange.newStatus as any);
@@ -228,81 +238,6 @@ const VisitorLog: React.FC = () => {
     setShowConfirmationModal(false);
   };
 
-  // Bulk selection functions
-  const handleSelectAll = () => {
-    if (selectedVisitors.size === filteredVisitors.length) {
-      // Deselect all
-      setSelectedVisitors(new Set());
-    } else {
-      // Select all visible visitors
-      setSelectedVisitors(new Set(filteredVisitors.map(v => v.id)));
-    }
-  };
-
-  const handleSelectVisitor = (visitorId: string) => {
-    const newSelection = new Set(selectedVisitors);
-    if (newSelection.has(visitorId)) {
-      newSelection.delete(visitorId);
-    } else {
-      newSelection.add(visitorId);
-    }
-    setSelectedVisitors(newSelection);
-  };
-
-  const clearSelection = () => {
-    setSelectedVisitors(new Set());
-  };
-
-  const getSelectAllState = () => {
-    if (selectedVisitors.size === 0) return 'none';
-    if (selectedVisitors.size === filteredVisitors.length) return 'all';
-    return 'some';
-  };
-
-  const getAvailableBulkStatuses = () => {
-    const selectedVisitorData = filteredVisitors.filter(v => selectedVisitors.has(v.id));
-    const allStatuses = new Set<string>();
-    
-    selectedVisitorData.forEach(visitor => {
-      const options = getStatusOptions(visitor.status);
-      options.forEach(status => allStatuses.add(status));
-    });
-    
-    return Array.from(allStatuses);
-  };
-
-  const handleBulkStatusChange = (newStatus: string) => {
-    const selectedVisitorData = filteredVisitors.filter(v => selectedVisitors.has(v.id));
-    const watchlistVisitors = selectedVisitorData.filter(v => v.watchlistMatch);
-    
-    if (watchlistVisitors.length > 0) {
-      // Show confirmation modal for watchlist visitors
-      setPendingBulkStatusChange({
-        visitorIds: Array.from(selectedVisitors),
-        newStatus
-      });
-      setShowBulkConfirmationModal(true);
-    } else {
-      // Apply status change immediately for non-watchlist visitors
-      Array.from(selectedVisitors).forEach(visitorId => {
-        updateVisitorStatus(visitorId, newStatus as any);
-      });
-      showToast(`Status updated to ${newStatus} for ${selectedVisitors.size} visitor${selectedVisitors.size > 1 ? 's' : ''}`, 'success');
-      clearSelection();
-    }
-  };
-
-  const confirmBulkStatusChange = () => {
-    if (pendingBulkStatusChange) {
-      pendingBulkStatusChange.visitorIds.forEach(visitorId => {
-        updateVisitorStatus(visitorId, pendingBulkStatusChange.newStatus as any);
-      });
-      showToast(`Status updated to ${pendingBulkStatusChange.newStatus} for ${pendingBulkStatusChange.visitorIds.length} visitor${pendingBulkStatusChange.visitorIds.length > 1 ? 's' : ''}`, 'success');
-      clearSelection();
-      setPendingBulkStatusChange(null);
-    }
-    setShowBulkConfirmationModal(false);
-  };
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -368,7 +303,7 @@ const VisitorLog: React.FC = () => {
             </label>
             <input
               type="date"
-              defaultValue="2025-06-17" 
+              defaultValue="2025-06-17"
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full"
             />
           </div>
@@ -430,60 +365,12 @@ const VisitorLog: React.FC = () => {
         </div>
       </div>
 
-      {/* Bulk Action Bar */}
-      {selectedVisitors.size > 0 && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <span className="text-sm font-medium text-indigo-900">
-              {selectedVisitors.size} visitor{selectedVisitors.size > 1 ? 's' : ''} selected
-            </span>
-            <div className="relative">
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleBulkStatusChange(e.target.value);
-                    e.target.value = ''; // Reset dropdown
-                  }
-                }}
-                className="appearance-none bg-white border border-indigo-300 rounded-lg px-3 py-2 pr-8 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">Change status to...</option>
-                {getAvailableBulkStatuses().map(status => (
-                  <option key={status} value={status}>{status}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-indigo-400 w-4 h-4 pointer-events-none" />
-            </div>
-          </div>
-          <button
-            onClick={clearSelection}
-            className="text-indigo-600 hover:text-indigo-800 flex items-center space-x-1"
-          >
-            <X className="w-4 h-4" />
-            <span className="text-sm">Clear selection</span>
-          </button>
-        </div>
-      )}
-
       {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={getSelectAllState() === 'all'}
-                    ref={(el) => {
-                      if (el) {
-                        el.indeterminate = getSelectAllState() === 'some';
-                      }
-                    }}
-                    onChange={handleSelectAll}
-                    className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                  />
-                </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
                   onClick={() => handleSort('status')}
@@ -495,29 +382,20 @@ const VisitorLog: React.FC = () => {
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('date')}
+                  onClick={() => handleSort('arrival')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Date</span>
-                    {getSortIcon('date')}
+                    <span>Arrival</span>
+                    {getSortIcon('arrival')}
                   </div>
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('expectedArrival')}
+                  onClick={() => handleSort('departure')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Expected arrival</span>
-                    {getSortIcon('expectedArrival')}
-                  </div>
-                </th>
-                <th 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('expectedDeparture')}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>Expected departure</span>
-                    {getSortIcon('expectedDeparture')}
+                    <span>Departure</span>
+                    {getSortIcon('departure')}
                   </div>
                 </th>
                 <th 
@@ -531,38 +409,48 @@ const VisitorLog: React.FC = () => {
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('submittedBy')}
+                  onClick={() => handleSort('watchlist')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Submitted by</span>
-                    {getSortIcon('submittedBy')}
+                    <span>Watchlist</span>
+                    {getSortIcon('watchlist')}
                   </div>
                 </th>
                 <th 
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSort('registeredFrom')}
+                  onClick={() => handleSort('host')}
                 >
                   <div className="flex items-center space-x-1">
-                    <span>Registered from</span>
-                    {getSortIcon('registeredFrom')}
+                    <span>Host</span>
+                    {getSortIcon('host')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('hostCompany')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Host company</span>
+                    {getSortIcon('hostCompany')}
+                  </div>
+                </th>
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('floor')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Floor</span>
+                    {getSortIcon('floor')}
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
-                  Action
+                  Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredVisitors.map((visitor) => (
                 <tr key={visitor.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <input
-                      type="checkbox"
-                      checked={selectedVisitors.has(visitor.id)}
-                      onChange={() => handleSelectVisitor(visitor.id)}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                    />
-                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="relative status-dropdown-container">
                       <button 
@@ -591,34 +479,33 @@ const VisitorLog: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {visitor.date}
+                    {visitor.arrival}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {visitor.expectedArrival}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {visitor.expectedDeparture}
+                    {visitor.departure}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-900">
-                        {visitor.name}
+                    <span className="text-sm font-medium text-gray-900">
+                      {visitor.name}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {visitor.watchlistMatch && visitor.watchlistLevel ? (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getWatchlistLevelColor(visitor.watchlistLevel)}`}>
+                        {visitor.watchlistLevel}
                       </span>
-                      {visitor.watchlistMatch && (
-                        <div className="relative group">
-                          <Lock className="w-4 h-4 text-red-500" />
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
-                            {visitor.watchlistLevel || 'High risk'}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    ) : (
+                      <span className="text-sm text-gray-400">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {visitor.submittedBy}
+                    {visitor.host}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {visitor.registeredFrom}
+                    {visitor.hostCompany}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {visitor.floor}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="relative action-menu-container">
@@ -714,18 +601,6 @@ const VisitorLog: React.FC = () => {
         onConfirm={confirmStatusChange}
         visitor={pendingStatusChange ? filteredVisitors.find(v => v.id === pendingStatusChange.visitorId) || null : null}
         newStatus={pendingStatusChange?.newStatus as any}
-      />
-      
-      <BulkStatusChangeConfirmationModal
-        isOpen={showBulkConfirmationModal}
-        onClose={() => {
-          setShowBulkConfirmationModal(false);
-          setPendingBulkStatusChange(null);
-        }}
-        onConfirm={confirmBulkStatusChange}
-        visitors={pendingBulkStatusChange ? filteredVisitors.filter(v => pendingBulkStatusChange.visitorIds.includes(v.id)) : []}
-        newStatus={pendingBulkStatusChange?.newStatus || ''}
-        watchlistVisitors={pendingBulkStatusChange ? filteredVisitors.filter(v => pendingBulkStatusChange.visitorIds.includes(v.id) && v.watchlistMatch) : []}
       />
       
       <Toast
