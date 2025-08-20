@@ -263,10 +263,10 @@ const VisitorDetails: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
 
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-6">
             <div>
               <h4 className="text-sm font-medium text-gray-700 mb-2">Arrival</h4>
               <p className="text-sm text-gray-900">{visitor.arrival}</p>
