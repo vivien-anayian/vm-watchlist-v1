@@ -429,8 +429,6 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       floor: 'Floor 15',
       watchlistMatch: true,
       watchlistLevelId: 'high-risk',
-      requiresApproval: true,
-      approvalStatus: 'pending'
     },
     {
       id: '2',
@@ -449,8 +447,6 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       floor: 'Floor 15',
       watchlistMatch: true,
       watchlistLevelId: 'high-risk',
-      requiresApproval: true,
-      approvalStatus: 'pending'
     },
     {
       id: '3',
@@ -469,8 +465,6 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       floor: 'Floor 15',
       watchlistMatch: true,
       watchlistLevelId: 'high-risk',
-      requiresApproval: true,
-      approvalStatus: 'pending'
     },
     {
       id: '4',
@@ -638,10 +632,18 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     return stored ? JSON.parse(stored) : [];
   });
 
-  // Calculate pending approval count
-  const pendingApprovalCount = visitorEntries.filter(
-    visitor => visitor.requiresApproval && visitor.approvalStatus === 'pending'
-  ).length;
+  // Calculate pending approval count based on watchlist configuration
+  const pendingApprovalCount = visitorEntries.filter(visitor => {
+    if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
+    
+    const level = getWatchlistLevelById(visitor.watchlistLevelId);
+    const requiresApproval = level?.requiresManualApproval || false;
+    
+    // Check if visitor needs approval and is still pending
+    return requiresApproval && 
+           visitor.status === 'Upcoming' && 
+           (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
+  }).length;
 
   const [visitorConfiguration, setVisitorConfiguration] = useState<VisitorConfiguration>({
     manualValidation: true,
@@ -741,7 +743,6 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (level?.requiresManualApproval) {
         newVisitor.requiresApproval = true;
         newVisitor.approvalStatus = 'pending';
-        newVisitor.status = 'Upcoming'; // Keep as upcoming but flag for approval
       }
     }
     
@@ -974,9 +975,17 @@ Building Security Team`
   };
 
   const getPendingApprovalVisitors = (): VisitorEntry[] => {
-    return visitorEntries.filter(
-      visitor => visitor.requiresApproval && visitor.approvalStatus === 'pending'
-    );
+    return visitorEntries.filter(visitor => {
+      if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
+      
+      const level = getWatchlistLevelById(visitor.watchlistLevelId);
+      const requiresApproval = level?.requiresManualApproval || false;
+      
+      // Check if visitor needs approval and is still pending
+      return requiresApproval && 
+             visitor.status === 'Upcoming' && 
+             (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
+    });
   };
 
   const approveVisitor = (visitorId: string, approvedBy: string) => {
