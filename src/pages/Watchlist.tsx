@@ -11,7 +11,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useWatchlist } from '../context/WatchlistContext';
+import { useWatchlist, WatchlistEntry } from '../context/WatchlistContext';
 import RemoveWatchlistModal from '../components/RemoveWatchlistModal';
 import Toast from '../components/Toast';
 import { useToast } from '../hooks/useToast';
@@ -20,7 +20,7 @@ type SortField = 'name' | 'contact' | 'level' | 'notes' | 'lastUpdated' | 'repor
 type SortDirection = 'asc' | 'desc';
 
 const Watchlist: React.FC = () => {
-  const { searchWatchlist, removeFromWatchlist } = useWatchlist();
+  const { searchWatchlist, removeFromWatchlist, getWatchlistLevelName, getWatchlistLevelColor } = useWatchlist();
   const { toast, showToast, hideToast } = useToast();
   const location = useLocation();
   const [showRemoveModal, setShowRemoveModal] = useState(false);
@@ -58,8 +58,8 @@ const Watchlist: React.FC = () => {
           bValue = b.primaryEmail;
           break;
         case 'level':
-          aValue = a.level;
-          bValue = b.level;
+          aValue = getWatchlistLevelName(a.levelId);
+          bValue = getWatchlistLevelName(b.levelId);
           break;
         case 'notes':
           aValue = a.notes;
@@ -86,7 +86,7 @@ const Watchlist: React.FC = () => {
     });
     
     setFilteredEntries(results);
-  }, [searchQuery, searchWatchlist, sortField, sortDirection]);
+  }, [searchQuery, searchWatchlist, sortField, sortDirection, getWatchlistLevelName]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -121,19 +121,6 @@ const Watchlist: React.FC = () => {
       }
       setRemovingEntry(null);
       setShowRemoveModal(false);
-    }
-  };
-
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'High risk':
-        return 'bg-red-100 text-red-800';
-      case 'Medium priority':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Low priority':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -181,6 +168,8 @@ const Watchlist: React.FC = () => {
               <select className="appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 pr-8 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full">
                 <option>All types</option>
                 <option>High risk</option>
+                <option>Medium risk</option>
+                <option>Low risk</option>
               </select>
               <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
             </div>
@@ -329,8 +318,8 @@ const Watchlist: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelColor(entry.level)}`}>
-                      {entry.level}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getWatchlistLevelColor(entry.levelId)}`}>
+                      {getWatchlistLevelName(entry.levelId)}
                     </span>
                   </td>
                   <td className="px-4 py-4">

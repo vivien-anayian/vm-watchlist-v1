@@ -66,6 +66,7 @@ const VisitorDetails: React.FC = () => {
   const { getVisitorById, getWatchlistEntryForVisitor, getMatchedFields } = useWatchlist();
   const visitor = id ? getVisitorById(id) : null;
   const watchlistEntry = id ? getWatchlistEntryForVisitor(id) : null;
+  const { getWatchlistLevelName, getWatchlistLevelColor } = useWatchlist();
 
   if (!visitor) {
     return (
@@ -93,21 +94,6 @@ const VisitorDetails: React.FC = () => {
         return 'bg-gray-100 text-gray-800';
       case 'Canceled':
         return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getWatchlistLevelColor = (level?: string) => {
-    switch (level) {
-      case 'High risk':
-        return 'bg-red-100 text-red-800';
-      case 'Medium risk':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Low risk':
-        return 'bg-blue-100 text-blue-800';
-      case 'VIP':
-        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -166,8 +152,8 @@ const VisitorDetails: React.FC = () => {
           
           <div className="space-y-4">
             <div>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getWatchlistLevelColor(visitor.watchlistLevel)}`}>
-                {visitor.watchlistLevel}
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${visitor.watchlistLevelId ? getWatchlistLevelColor(visitor.watchlistLevelId) : 'bg-gray-100 text-gray-800'}`}>
+                {visitor.watchlistLevelId ? getWatchlistLevelName(visitor.watchlistLevelId) : 'Unknown Level'}
               </span>
             </div>
             

@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import { ChevronDown, Upload, X } from 'lucide-react';
+import { ChevronDown, Upload, X, Check } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 const VisitorConfiguration: React.FC = () => {
   const { visitorConfiguration, updateVisitorConfiguration } = useWatchlist();
-  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'email'>('general');
+  const { toast, showToast, hideToast } = useToast();
+  const [activeTab, setActiveTab] = useState<'general' | 'scheduling' | 'notifications' | 'email' | 'watchlistLevels' | 'watchlistRules'>('general');
   const [localConfig, setLocalConfig] = useState(visitorConfiguration);
   const [hasChanges, setHasChanges] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleConfigChange = (updates: any) => {
     const newConfig = {
       ...localConfig,
       ...updates,
+      watchlistLevels: updates.watchlistLevels || localConfig.watchlistLevels,
+      notificationRecipients: updates.notificationRecipients || localConfig.notificationRecipients,
       emailTemplate: {
         ...localConfig.emailTemplate,
         ...updates.emailTemplate
@@ -19,16 +25,62 @@ const VisitorConfiguration: React.FC = () => {
     };
     setLocalConfig(newConfig);
     setHasChanges(true);
+    
+    // Validate watchlist levels if they were updated
+    if (updates.watchlistLevels) {
+      validateWatchlistLevels(updates.watchlistLevels);
+    }
+  };
+
+  const validateWatchlistLevels = (levels: any[]) => {
+    const newErrors: Record<string, string> = {};
+    const names = levels.map(level => level.name.trim().toLowerCase());
+    
+    levels.forEach((level, index) => {
+      const key = `level-${level.id}`;
+      
+      // Check if name is empty
+      if (!level.name.trim()) {
+        newErrors[key] = 'Level name is required';
+      }
+      // Check if name is too long
+      else if (level.name.length > 64) {
+        newErrors[key] = 'Level name must be 64 characters or less';
+      }
+      // Check for duplicates
+      else if (names.filter(name => name === level.name.trim().toLowerCase()).length > 1) {
+        newErrors[key] = 'Level name must be unique';
+      }
+    });
+    
+    setErrors(newErrors);
   };
 
   const handleSave = () => {
+    // Validate before saving
+    validateWatchlistLevels(localConfig.watchlistLevels);
+    
+    if (Object.keys(errors).length > 0) {
+      showToast('Please fix the errors before saving', 'error');
+      return;
+    }
+    
     updateVisitorConfiguration(localConfig);
     setHasChanges(false);
+    showToast('Configuration saved successfully', 'success');
   };
 
   const handleUndo = () => {
     setLocalConfig(visitorConfiguration);
     setHasChanges(false);
+    setErrors({});
+    showToast('Changes reset to default', 'info');
+  };
+
+  const handleResetAll = () => {
+    if (window.confirm('Are you sure you want to reset all changes? This action cannot be undone.')) {
+      handleUndo();
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +103,24 @@ const VisitorConfiguration: React.FC = () => {
     });
   };
 
+  const handleWatchlistLevelChange = (levelId: string, field: string, value: any) => {
+    const updatedLevels = localConfig.watchlistLevels.map(level => 
+      level.id === levelId ? { ...level, [field]: value } : level
+    );
+    handleConfigChange({ watchlistLevels: updatedLevels });
+  };
+
+  const toggleNotificationRecipient = (levelId: string, recipientId: string) => {
+    const level = localConfig.watchlistLevels.find(l => l.id === levelId);
+    if (!level) return;
+    
+    const updatedRecipients = level.notificationRecipients.includes(recipientId)
+      ? level.notificationRecipients.filter(id => id !== recipientId)
+      : [...level.notificationRecipients, recipientId];
+    
+    handleWatchlistLevelChange(levelId, 'notificationRecipients', updatedRecipients);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -59,10 +129,10 @@ const VisitorConfiguration: React.FC = () => {
         <div className="flex items-center space-x-3">
           {hasChanges && (
             <button
-              onClick={handleUndo}
+              onClick={handleResetAll}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Undo
+              Reset all
             </button>
           )}
           <button
@@ -74,7 +144,7 @@ const VisitorConfiguration: React.FC = () => {
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            Save
+            Save all
           </button>
         </div>
       </div>
@@ -91,6 +161,16 @@ const VisitorConfiguration: React.FC = () => {
             }`}
           >
             General setup
+          </button>
+          <button
+            onClick={() => setActiveTab('scheduling')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'scheduling'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Scheduling
           </button>
           <button
             onClick={() => setActiveTab('notifications')}
@@ -111,6 +191,26 @@ const VisitorConfiguration: React.FC = () => {
             }`}
           >
             Email template
+          </button>
+          <button
+            onClick={() => setActiveTab('watchlistLevels')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'watchlistLevels'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Watchlist levels
+          </button>
+          <button
+            onClick={() => setActiveTab('watchlistRules')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'watchlistRules'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Watchlist rules
           </button>
         </nav>
       </div>
@@ -175,12 +275,172 @@ const VisitorConfiguration: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'scheduling' && (
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Scheduling</h3>
+            <p className="text-sm text-gray-600">
+              Configure scheduling settings for visitor management.
+            </p>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'notifications' && (
         <div className="space-y-8">
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Notifications</h3>
             <p className="text-sm text-gray-600">
               Configure notification settings for visitor management.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'watchlistLevels' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Watchlist levels</h3>
+            <p className="text-sm text-gray-600">
+              Set up the watchlist levels below to control how the system reacts when a visitor matches a watchlisted individual. You can customize each level to fit your security protocols.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-6">
+            {localConfig.watchlistLevels.map((level) => (
+              <div key={level.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                {/* Level Header with Color Indicator */}
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className={`w-3 h-3 rounded-full ${
+                    level.color === 'red' ? 'bg-red-500' :
+                    level.color === 'yellow' ? 'bg-yellow-500' :
+                    'bg-gray-500'
+                  }`}></div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    level.color === 'red' ? 'bg-red-100 text-red-800' :
+                    level.color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {level.name}
+                  </span>
+                </div>
+
+                {/* Watchlist Level Name Input */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Watchlist level
+                  </label>
+                  <input
+                    type="text"
+                    value={level.name}
+                    onChange={(e) => handleWatchlistLevelChange(level.id, 'name', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
+                      errors[`level-${level.id}`] ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter level name"
+                    maxLength={64}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Give a relevant name to show the purpose</p>
+                  {errors[`level-${level.id}`] && (
+                    <p className="text-xs text-red-600 mt-1">{errors[`level-${level.id}`]}</p>
+                  )}
+                </div>
+
+                {/* Send Email Notifications */}
+                <div className="mb-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id={`email-${level.id}`}
+                      type="checkbox"
+                      checked={level.sendEmailNotifications}
+                      onChange={(e) => handleWatchlistLevelChange(level.id, 'sendEmailNotifications', e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <label htmlFor={`email-${level.id}`} className="text-sm font-medium text-gray-900">
+                      Send email notifications
+                    </label>
+                  </div>
+                </div>
+
+                {/* Notification Recipients Dropdown */}
+                {level.sendEmailNotifications && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Select who needs to be notified
+                    </label>
+                    <div className="relative">
+                      <div className="border border-gray-300 rounded-lg p-2 bg-white">
+                        {localConfig.notificationRecipients.map((recipient) => (
+                          <div key={recipient.id} className="flex items-center space-x-2 py-1">
+                            <input
+                              type="checkbox"
+                              id={`${level.id}-${recipient.id}`}
+                              checked={level.notificationRecipients.includes(recipient.id)}
+                              onChange={() => toggleNotificationRecipient(level.id, recipient.id)}
+                              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                            />
+                            <label htmlFor={`${level.id}-${recipient.id}`} className="text-sm text-gray-900">
+                              {recipient.name}
+                            </label>
+                            {level.notificationRecipients.includes(recipient.id) && (
+                              <Check className="w-4 h-4 text-indigo-600" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* System Logging */}
+                <div className="mb-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id={`logging-${level.id}`}
+                      type="checkbox"
+                      checked={level.systemLogging}
+                      onChange={(e) => handleWatchlistLevelChange(level.id, 'systemLogging', e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <label htmlFor={`logging-${level.id}`} className="text-sm font-medium text-gray-900">
+                      System logging
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Automatically logs all watchlist matches and security actions for audit trails and compliance reporting
+                  </p>
+                </div>
+
+                {/* Requires Manual Approval */}
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      id={`approval-${level.id}`}
+                      type="checkbox"
+                      checked={level.requiresManualApproval}
+                      onChange={(e) => handleWatchlistLevelChange(level.id, 'requiresManualApproval', e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <label htmlFor={`approval-${level.id}`} className="text-sm font-medium text-gray-900">
+                      Requires manual approval
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    via Admin portal - text TBD
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'watchlistRules' && (
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Watchlist rules</h3>
+            <p className="text-sm text-gray-600">
+              Configure watchlist rules and matching criteria.
             </p>
           </div>
         </div>
@@ -428,6 +688,13 @@ const VisitorConfiguration: React.FC = () => {
           </div>
         </div>
       )}
+      
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </div>
   );
 };

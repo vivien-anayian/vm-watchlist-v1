@@ -10,7 +10,7 @@ export interface WatchlistEntry {
   primaryPhone: string;
   additionalEmails: string[];
   additionalPhones: string[];
-  level: 'High risk' | 'Medium priority' | 'Low priority';
+  levelId: 'high-risk' | 'medium-risk' | 'low-risk';
   notes: string;
   reportedBy: string;
   lastUpdated: string;
@@ -38,14 +38,32 @@ export interface VisitorEntry {
   hostCompanyLocation: string;
   floor: string;
   watchlistMatch?: boolean;
-  watchlistLevel?: string;
+  watchlistLevelId?: 'high-risk' | 'medium-risk' | 'low-risk';
   wasWatchlistFlagged?: boolean; // Track if visitor was ever flagged
+}
+
+export interface WatchlistLevel {
+  id: 'high-risk' | 'medium-risk' | 'low-risk';
+  name: string;
+  color: 'red' | 'yellow' | 'gray';
+  sendEmailNotifications: boolean;
+  notificationRecipients: string[];
+  systemLogging: boolean;
+  requiresManualApproval: boolean;
+}
+
+export interface NotificationRecipient {
+  id: string;
+  name: string;
+  type: 'security' | 'member' | 'team';
 }
 
 export interface VisitorConfiguration {
   manualValidation: boolean;
   earlyCheckinMinutes: number;
   sendQRCode: boolean;
+  watchlistLevels: WatchlistLevel[];
+  notificationRecipients: NotificationRecipient[];
   emailTemplate: {
     bannerImage?: string;
     entryInstructions: string;
@@ -57,6 +75,9 @@ interface WatchlistContextType {
   watchlistEntries: WatchlistEntry[];
   visitorEntries: VisitorEntry[];
   visitorConfiguration: VisitorConfiguration;
+  getWatchlistLevelById: (id: string) => WatchlistLevel | undefined;
+  getWatchlistLevelName: (id: string) => string;
+  getWatchlistLevelColor: (id: string) => string;
   addVisitor: (visitor: Omit<VisitorEntry, 'id'>) => VisitorEntry;
   addToWatchlist: (entry: Omit<WatchlistEntry, 'id' | 'lastUpdated'>) => WatchlistEntry;
   updateWatchlistEntry: (id: string, entry: Partial<WatchlistEntry>) => void;
@@ -65,7 +86,7 @@ interface WatchlistContextType {
   getWatchlistEntryById: (id: string) => WatchlistEntry | undefined;
   searchVisitors: (query: string) => VisitorEntry[];
   searchWatchlist: (query: string) => WatchlistEntry[];
-  updateVisitorWatchlistStatus: (id: string, isOnWatchlist: boolean, level?: string) => void;
+  updateVisitorWatchlistStatus: (id: string, isOnWatchlist: boolean, levelId?: string) => void;
   updateVisitorStatus: (id: string, status: VisitorEntry['status']) => void;
   updateVisitorConfiguration: (config: Partial<VisitorConfiguration>) => void;
   checkWatchlistMatch: (firstName: string, lastName: string) => WatchlistEntry | null;
@@ -95,7 +116,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.234.5678',
       additionalEmails: ['mark.rodriguez@gmail.com', 'm.rodriguez@outlook.com'],
       additionalPhones: ['1.555.987.6543'],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Former employee terminated for security violations and unauthorized access to confidential client data. Attempted to access building after termination using expired credentials. Has made threatening statements toward management team. Physical description: 6\'2", brown hair, hazel eyes, distinctive scar on left cheek. Known to drive a black Honda Civic, license plate ABC-1234. Security should be notified immediately if spotted on premises.',
       reportedBy: 'Sarah Chen',
       lastUpdated: 'Jun 15, 2025',
@@ -124,7 +145,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.345.6789',
       additionalEmails: ['jen.thompson@personal.com'],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Contractor who was involved in a verbal altercation with security staff and made inappropriate comments toward female employees. Refused to follow building safety protocols and became aggressive when asked to comply. Has been banned from all company premises. Known to work for multiple contracting companies in the area.',
       reportedBy: 'Michael Davis',
       lastUpdated: 'May 28, 2025',
@@ -153,7 +174,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.456.7890',
       additionalEmails: ['dave.kim@gmail.com'],
       additionalPhones: ['1.555.123.4567'],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Vendor representative who attempted to gain unauthorized access to restricted areas during a routine delivery. Found taking photographs of sensitive equipment and floor layouts without permission. Investigation revealed potential corporate espionage activities. All future deliveries from this vendor must be supervised.',
       reportedBy: 'Lisa Wang',
       lastUpdated: 'Apr 22, 2025',
@@ -182,7 +203,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.567.8901',
       additionalEmails: ['amy.foster@hotmail.com', 'a.foster@freelance.net'],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Former consultant who violated confidentiality agreements by sharing proprietary information with competitors. Attempted to access building systems after contract termination. Has been seen loitering in the building lobby on multiple occasions. Legal action is pending.',
       reportedBy: 'Robert Johnson',
       lastUpdated: 'Mar 18, 2025',
@@ -205,7 +226,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.678.9012',
       additionalEmails: [],
       additionalPhones: ['1.555.234.5678'],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Delivery driver who became hostile when asked to provide identification and follow standard security procedures. Made threatening gestures toward reception staff and refused to leave when requested. Has been banned from making deliveries to this location.',
       reportedBy: 'Emily Rodriguez',
       lastUpdated: 'Feb 14, 2025',
@@ -234,7 +255,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.789.0123',
       additionalEmails: ['rachel.a@personal.com'],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Maintenance worker who was found in unauthorized areas after hours and could not provide adequate explanation for presence. Security cameras showed suspicious behavior around IT equipment. Background check revealed discrepancies in employment history.',
       reportedBy: 'James Wilson',
       lastUpdated: 'Jan 25, 2025',
@@ -263,7 +284,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.890.1234',
       additionalEmails: [],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'high-risk',
       notes: 'Visitor who became disruptive during a business meeting and had to be escorted from the premises by security. Made inappropriate comments and showed signs of intoxication. Host company has been notified and future visits are prohibited.',
       reportedBy: 'Nicole Brown',
       lastUpdated: 'May 10, 2025',
@@ -286,7 +307,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.901.2345',
       additionalEmails: ['steph.clark@gmail.com'],
       additionalPhones: ['1.555.345.6789'],
-      level: 'High risk',
+      levelId: 'medium-risk',
       notes: 'Temporary employee who was terminated for theft of office supplies and equipment. Attempted to return to building multiple times after termination. Has been seen taking photographs of the building exterior and employee parking areas.',
       reportedBy: 'Kevin Lee',
       lastUpdated: 'Sep 10, 2025',
@@ -302,7 +323,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.012.3456',
       additionalEmails: [],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'medium-risk',
       notes: 'Independent contractor who violated safety protocols and became argumentative with supervisory staff. Refused to wear required safety equipment and ignored building evacuation procedures during a drill. Contract has been terminated.',
       reportedBy: 'Patricia Garcia',
       lastUpdated: 'Aug 28, 2025',
@@ -318,7 +339,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.123.4567',
       additionalEmails: ['michelle.l@personal.net'],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'medium-risk',
       notes: 'Vendor representative who attempted to bribe security personnel to gain access to restricted areas. Investigation revealed connections to competitors seeking proprietary information. All vendor relationships have been severed.',
       reportedBy: 'Daniel Martinez',
       lastUpdated: 'Aug 15, 2025',
@@ -341,7 +362,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.234.5678',
       additionalEmails: [],
       additionalPhones: ['1.555.567.8901'],
-      level: 'High risk',
+      levelId: 'low-risk',
       notes: 'Service technician who was found accessing computer systems without authorization during a routine maintenance call. Attempted to install unauthorized software and copy sensitive files. Criminal charges are pending.',
       reportedBy: 'Angela Thompson',
       lastUpdated: 'Jul 30, 2025',
@@ -357,7 +378,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       primaryPhone: '1.555.345.6789',
       additionalEmails: ['laura.davis@consultant.net'],
       additionalPhones: [],
-      level: 'High risk',
+      levelId: 'low-risk',
       notes: 'Freelance consultant who violated building access policies and was found in secure areas without proper authorization. Refused to cooperate with security investigation and made false statements about her purpose for being in restricted zones.',
       reportedBy: 'Mark Johnson',
       lastUpdated: 'Jul 15, 2025',
@@ -382,7 +403,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: true,
-      watchlistLevel: 'High risk'
+      watchlistLevelId: 'high-risk'
     },
     {
       id: '2',
@@ -400,7 +421,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11, Floor 12',
       watchlistMatch: true,
-      watchlistLevel: 'Medium risk'
+      watchlistLevelId: 'medium-risk'
     },
     {
       id: '3',
@@ -435,7 +456,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '200 East 41st Street, 24 Fl, New York, NY',
       floor: 'Floor 24',
       watchlistMatch: true,
-      watchlistLevel: 'Low risk'
+      watchlistLevelId: 'low-risk'
     },
     {
       id: '5',
@@ -453,7 +474,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '200 East 41st Street, 24 Fl, New York, NY',
       floor: 'Floor 24',
       watchlistMatch: true,
-      watchlistLevel: 'VIP'
+      watchlistLevelId: 'high-risk'
     },
     {
       id: '6',
@@ -488,7 +509,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
       floor: 'Floor 11',
       watchlistMatch: true,
-      watchlistLevel: 'High risk'
+      watchlistLevelId: 'high-risk'
     },
     {
       id: '8',
@@ -541,7 +562,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '2200 Innovation Way, 22 Fl, San Francisco, CA',
       floor: 'Floor 22',
       watchlistMatch: true,
-      watchlistLevel: 'Medium risk'
+      watchlistLevelId: 'medium-risk'
     },
     {
       id: '11',
@@ -576,7 +597,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '1800 Marketing Avenue, 18 Fl, Miami, FL',
       floor: 'Floor 18',
       watchlistMatch: true,
-      watchlistLevel: 'High risk'
+      watchlistLevelId: 'high-risk'
     }
   ]);
 
@@ -584,11 +605,72 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     manualValidation: true,
     earlyCheckinMinutes: 15,
     sendQRCode: true,
+    watchlistLevels: [
+      {
+        id: 'high-risk',
+        name: 'High risk',
+        color: 'red',
+        sendEmailNotifications: true,
+        notificationRecipients: ['building-security', 'workplace-member'],
+        systemLogging: true,
+        requiresManualApproval: true
+      },
+      {
+        id: 'medium-risk',
+        name: 'Medium risk',
+        color: 'yellow',
+        sendEmailNotifications: true,
+        notificationRecipients: ['building-security'],
+        systemLogging: true,
+        requiresManualApproval: false
+      },
+      {
+        id: 'low-risk',
+        name: 'Low risk',
+        color: 'gray',
+        sendEmailNotifications: false,
+        notificationRecipients: [],
+        systemLogging: true,
+        requiresManualApproval: false
+      }
+    ],
+    notificationRecipients: [
+      { id: 'building-security', name: 'Building security', type: 'security' },
+      { id: 'workplace-member', name: 'Workplace member', type: 'member' },
+      { id: 'security-team-alpha', name: 'Security Team Alpha', type: 'team' },
+      { id: 'management-team', name: 'Management Team', type: 'team' },
+      { id: 'reception-staff', name: 'Reception Staff', type: 'team' }
+    ],
     emailTemplate: {
       entryInstructions: 'Entrance on King is under construction, use alternate entrance to the south.\nUse the Kiosk for quick check-in with security. Adding one more line to test.',
       buildingGuidelines: 'Do not share this pass with anyone.'
     }
   });
+
+  const getWatchlistLevelById = (id: string): WatchlistLevel | undefined => {
+    return visitorConfiguration.watchlistLevels.find(level => level.id === id);
+  };
+
+  const getWatchlistLevelName = (id: string): string => {
+    const level = getWatchlistLevelById(id);
+    return level ? level.name : id; // Fallback to ID if level not found
+  };
+
+  const getWatchlistLevelColor = (id: string): string => {
+    const level = getWatchlistLevelById(id);
+    if (!level) return 'bg-gray-100 text-gray-800';
+    
+    switch (level.color) {
+      case 'red':
+        return 'bg-red-100 text-red-800';
+      case 'yellow':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'gray':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const addToWatchlist = (entry: Omit<WatchlistEntry, 'id' | 'lastUpdated'>) => {
     const newEntry: WatchlistEntry = {
@@ -633,14 +715,14 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     );
   };
 
-  const updateVisitorWatchlistStatus = (id: string, isOnWatchlist: boolean, level?: string) => {
+  const updateVisitorWatchlistStatus = (id: string, isOnWatchlist: boolean, levelId?: string) => {
     setVisitorEntries(prev => 
       prev.map(visitor => 
         visitor.id === id 
           ? { 
               ...visitor, 
               watchlistMatch: isOnWatchlist,
-              watchlistLevel: level
+              watchlistLevelId: levelId as any
             }
           : visitor
       )
@@ -670,6 +752,8 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     setVisitorConfiguration(prev => ({
       ...prev,
       ...config,
+      watchlistLevels: config.watchlistLevels || prev.watchlistLevels,
+      notificationRecipients: config.notificationRecipients || prev.notificationRecipients,
       emailTemplate: {
         ...prev.emailTemplate,
         ...config.emailTemplate
@@ -773,6 +857,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       watchlistEntries,
       visitorEntries,
       visitorConfiguration,
+      getWatchlistLevelById,
+      getWatchlistLevelName,
+      getWatchlistLevelColor,
       addVisitor,
       addToWatchlist,
       updateWatchlistEntry,

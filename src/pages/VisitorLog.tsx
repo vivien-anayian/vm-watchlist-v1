@@ -20,7 +20,7 @@ type SortField = 'status' | 'date' | 'arrival' | 'departure' | 'name' | 'watchli
 type SortDirection = 'asc' | 'desc';
 
 const VisitorLog: React.FC = () => {
-  const { searchVisitors, updateVisitorStatus } = useWatchlist();
+  const { searchVisitors, updateVisitorStatus, getWatchlistLevelName, getWatchlistLevelColor } = useWatchlist();
   const { toast, showToast, hideToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -106,8 +106,8 @@ const VisitorLog: React.FC = () => {
           bValue = b.name;
           break;
         case 'watchlist':
-          aValue = a.watchlistLevel || '';
-          bValue = b.watchlistLevel || '';
+          aValue = a.watchlistLevelId ? getWatchlistLevelName(a.watchlistLevelId) : '';
+          bValue = b.watchlistLevelId ? getWatchlistLevelName(b.watchlistLevelId) : '';
           break;
         case 'host':
           aValue = a.host;
@@ -138,7 +138,7 @@ const VisitorLog: React.FC = () => {
     });
     
     setFilteredVisitors(results);
-  }, [searchQuery, searchVisitors, sortField, sortDirection, statusFilter, watchlistMatchFilter]);
+  }, [searchQuery, searchVisitors, sortField, sortDirection, statusFilter, watchlistMatchFilter, getWatchlistLevelName]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -212,21 +212,6 @@ const VisitorLog: React.FC = () => {
     }
     
     setShowStatusDropdown(null);
-  };
-
-  const getWatchlistLevelColor = (level?: string) => {
-    switch (level) {
-      case 'High risk':
-        return 'bg-red-100 text-red-800';
-      case 'Medium risk':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Low risk':
-        return 'bg-blue-100 text-blue-800';
-      case 'VIP':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return '';
-    }
   };
 
   const confirmStatusChange = () => {
@@ -493,9 +478,9 @@ const VisitorLog: React.FC = () => {
                     </Link>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {visitor.watchlistMatch && visitor.watchlistLevel ? (
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getWatchlistLevelColor(visitor.watchlistLevel)}`}>
-                        {visitor.watchlistLevel}
+                    {visitor.watchlistMatch && visitor.watchlistLevelId ? (
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getWatchlistLevelColor(visitor.watchlistLevelId)}`}>
+                        {getWatchlistLevelName(visitor.watchlistLevelId)}
                       </span>
                     ) : (
                       <span className="text-sm text-gray-400">-</span>
