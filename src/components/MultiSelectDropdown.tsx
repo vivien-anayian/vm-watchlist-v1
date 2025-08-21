@@ -109,33 +109,10 @@ const VisitorConfiguration: React.FC = () => {
       level.id === levelId ? { ...level, [field]: value } : level
     );
     handleConfigChange({ watchlistLevels: updatedLevels });
-  };
-
-  const toggleNotificationRecipient = (levelId: string, recipientId: string) => {
-    const level = localConfig.watchlistLevels.find(l => l.id === levelId);
-    if (!level) return;
-    
-    const updatedRecipients = level.notificationRecipients.includes(recipientId)
-      ? level.notificationRecipients.filter(id => id !== recipientId)
-      : [...level.notificationRecipients, recipientId];
-    
-    handleWatchlistLevelChange(levelId, 'notificationRecipients', updatedRecipients);
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Configuration</h1>
-        <div className="flex items-center space-x-3">
-          {hasChanges && (
-            <button
-              onClick={handleResetAll}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Reset all
-            </button>
-          )}
+        <div className="flex-1 min-w-0 truncate">
+          <span className={selectedIds.length === 0 ? 'text-gray-500' : 'text-gray-900'}>
+            {getDisplayText()}
+          </span>
           <button
             onClick={handleSave}
             disabled={!hasChanges}
@@ -369,12 +346,27 @@ const VisitorConfiguration: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Select who needs to be notified
                     </label>
-                    <MultiSelectDropdown
-                      options={localConfig.notificationRecipients}
-                      selectedIds={level.notificationRecipients}
-                      onChange={(selectedIds) => handleWatchlistLevelChange(level.id, 'notificationRecipients', selectedIds)}
-                      placeholder="Select recipients"
-                    />
+                    <div className="relative">
+                      <div className="border border-gray-300 rounded-lg p-2 bg-white">
+                        {localConfig.notificationRecipients.map((recipient) => (
+                          <div key={recipient.id} className="flex items-center space-x-2 py-1">
+                            <input
+                              type="checkbox"
+                              id={`${level.id}-${recipient.id}`}
+                              checked={level.notificationRecipients.includes(recipient.id)}
+                              onChange={() => toggleNotificationRecipient(level.id, recipient.id)}
+                              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                            />
+                            <label htmlFor={`${level.id}-${recipient.id}`} className="text-sm text-gray-900">
+                              {recipient.name}
+                            </label>
+                            {level.notificationRecipients.includes(recipient.id) && (
+                              <Check className="w-4 h-4 text-indigo-600" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
 
