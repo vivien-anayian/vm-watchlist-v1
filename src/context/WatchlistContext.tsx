@@ -83,7 +83,7 @@ export interface SentEmail {
   hostEmail: string;
   hostName: string;
   visitorName: string;
-  action: 'approved' | 'denied';
+  action: 'approved' | 'denied' | 'security-action-required' | 'security-fyi';
   subject: string;
   body: string;
   sentAt: string;
@@ -746,6 +746,17 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
         newVisitor.requiresApproval = true;
         newVisitor.approvalStatus = 'pending';
       }
+      
+      // Send watchlist match notification if email notifications are enabled
+      if (level?.sendEmailNotifications) {
+        const [firstName, ...lastNameParts] = newVisitor.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+        const watchlistEntry = checkWatchlistMatch(firstName, lastName);
+        
+        if (watchlistEntry) {
+          sendWatchlistMatchNotification(newVisitor, level, watchlistEntry);
+        }
+      }
     }
     
     // Add to the beginning of the array to show at top
@@ -908,6 +919,85 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     return checkWatchlistMatch(firstName, lastName);
   };
 
+  // Email content generators for watchlist notifications
+  const generateSecurityActionRequiredEmail = (visitor: VisitorEntry, watchlistEntry: WatchlistEntry, level: WatchlistLevel): { subject: string; body: string } => ({
+    subject: `SECURITY ALERT - Watchlist Match Requires Approval`,
+    body: `A visitor registration has matched an individual on the security watchlist and requires your immediate review.
+
+VISITOR DETAILS:
+Name: ${visitor.name}
+Email: ${visitor.email}
+Phone: ${visitor.phone}
+Visit Date: ${visitor.date}
+Time: ${visitor.arrival} - ${visitor.departure}
+Host: ${visitor.host} - ${visitor.hostCompany}
+Floor: ${visitor.floor}
+
+WATCHLIST MATCH:
+Risk Level: ${getWatchlistLevelName(level.id)}
+Matched Fields: ${getMatchedFields(visitor.name, visitor.email, watchlistEntry).join(', ') || 'Name, Email'}
+Notes: ${watchlistEntry.notes}
+
+ACTION REQUIRED:
+Please review this match and approve or deny entry through the security portal.
+
+This visitor cannot proceed until security approval is granted.`
+  });
+
+  const generateSecurityFYIEmail = (visitor: VisitorEntry, watchlistEntry: WatchlistEntry, level: WatchlistLevel): { subject: string; body: string } => ({
+    subject: `Security Alert - Watchlist Match Detected (FYI)`,
+    body: `A visitor registration has matched an individual on the security watchlist. Per current security settings, this has been automatically processed.
+
+VISITOR DETAILS:
+Name: ${visitor.name}
+Email: ${visitor.email}
+Phone: ${visitor.phone}
+Visit Date: ${visitor.date}
+Time: ${visitor.arrival} - ${visitor.departure}
+Host: ${visitor.host} - ${visitor.hostCompany}
+Floor: ${visitor.floor}
+
+WATCHLIST MATCH:
+Risk Level: ${getWatchlistLevelName(level.id)}
+Matched Fields: ${getMatchedFields(visitor.name, visitor.email, watchlistEntry).join(', ') || 'Name, Email'}
+Notes: ${watchlistEntry.notes}
+
+STATUS: Automatically processed per security configuration
+No action required - for informational purposes only.`
+  });
+
+  const generateHostDecisionEmail = (visitor: VisitorEntry, action: 'approved' | 'denied'): { subject: string; body: string } => ({
+    subject: action === 'approved' ? `Visitor Approved - ${visitor.name}` : `Visitor Access Denied - ${visitor.name}`,
+    body: action === 'approved' 
+      ? `Dear ${visitor.host},
+
+Your visitor ${visitor.name} has been approved for entry after security review.
+
+Visit Details:
+• Date: ${visitor.date}
+• Time: ${visitor.arrival} - ${visitor.departure}
+• Floor: ${visitor.floor}
+• Company: ${visitor.hostCompany}
+
+The visitor can now proceed with their scheduled visit.
+
+Best regards,
+Building Security Team`
+      : `Dear ${visitor.host},
+
+Unfortunately, your visitor ${visitor.name} has been denied entry due to security concerns.
+
+Visit Details:
+• Date: ${visitor.date}
+• Time: ${visitor.arrival} - ${visitor.departure}
+• Visitor: ${visitor.name}
+
+Please contact building security for more information if you have questions about this decision.
+
+Best regards,
+Building Security Team`
+  });
+
   // Email content generators
   const generateApprovalEmailContent = (visitor: VisitorEntry): { subject: string; body: string } => ({
     subject: `Visitor Approved - ${visitor.name}`,
@@ -944,11 +1034,47 @@ Best regards,
 Building Security Team`
   });
 
-  // Send host notification email (simulated)
-  const sendHostNotification = (visitor: VisitorEntry, action: 'approved' | 'denied') => {
-    const emailContent = action === 'approved' 
-      ? generateApprovalEmailContent(visitor)
-      : generateDenialEmailContent(visitor);
+  // Send watchlist match notification to security team
+  const sendWatchlistMatchNotification = (visitor: VisitorEntry, level: WatchlistLevel, watchlistEntry: WatchlistEntry) => {
+    const emailContent = level.requiresManualApproval
+      ? generateSecurityActionRequiredEmail(visitor, watchlistEntry, level)
+      : generateSecurityFYIEmail(visitor, watchlistEntry, level);
+    
+    // Get notification recipients
+    const recipients = level.notificationRecipients.map(recipientId => {
+      const recipient = visitorConfiguration.notificationRecipients.find(r => r.id === recipientId);
+      return recipient ? recipient.name : recipientId;
+    });
+    
+    // Create email record for each recipient (or combined)
+    const email: SentEmail = {
+      id: Date.now().toString(),
+      visitorId: visitor.id,
+      hostEmail: recipients.join(', '), // Show all recipients
+      hostName: 'Security Team',
+      visitorName: visitor.name,
+      action: level.requiresManualApproval ? 'security-action-required' : 'security-fyi',
+      subject: emailContent.subject,
+      body: emailContent.body,
+      sentAt: new Date().toISOString()
+    };
+    
+    // Store email in localStorage for demo
+    const updatedEmails = [...sentEmails, email];
+    setSentEmails(updatedEmails);
+    localStorage.setItem('sentEmails', JSON.stringify(updatedEmails));
+    
+    // Log for debugging
+    console.log(`[WATCHLIST EMAIL SENT]`, {
+      to: recipients,
+      subject: emailContent.subject,
+      body: emailContent.body
+    });
+  };
+
+  // Send host decision notification email (simulated)
+  const sendHostDecisionNotification = (visitor: VisitorEntry, action: 'approved' | 'denied') => {
+    const emailContent = generateHostDecisionEmail(visitor, action);
     
     // Create email record
     const email: SentEmail = {
@@ -1003,8 +1129,13 @@ Building Security Team`
             requiresApproval: false
           };
           
-          // Send host notification
-          sendHostNotification(updatedVisitor, 'approved');
+          // Send host decision notification if manual approval was required
+          if (visitor.watchlistLevelId) {
+            const level = getWatchlistLevelById(visitor.watchlistLevelId);
+            if (level?.requiresManualApproval) {
+              sendHostDecisionNotification(updatedVisitor, 'approved');
+            }
+          }
           
           return updatedVisitor;
         }
@@ -1026,8 +1157,13 @@ Building Security Team`
             requiresApproval: false
           };
           
-          // Send host notification
-          sendHostNotification(updatedVisitor, 'denied');
+          // Send host decision notification if manual approval was required
+          if (visitor.watchlistLevelId) {
+            const level = getWatchlistLevelById(visitor.watchlistLevelId);
+            if (level?.requiresManualApproval) {
+              sendHostDecisionNotification(updatedVisitor, 'denied');
+            }
+          }
           
           return updatedVisitor;
         }

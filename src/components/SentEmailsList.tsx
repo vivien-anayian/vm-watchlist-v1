@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWatchlist } from '../context/WatchlistContext';
-import { Mail, CheckCircle, XCircle } from 'lucide-react';
+import { Mail, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 
 const SentEmailsList: React.FC = () => {
   const { getSentEmails } = useWatchlist();
@@ -25,12 +25,19 @@ const SentEmailsList: React.FC = () => {
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                email.action === 'approved' ? 'bg-green-100' : 'bg-red-100'
+                email.action === 'approved' ? 'bg-green-100' : 
+                email.action === 'denied' ? 'bg-red-100' :
+                email.action === 'security-action-required' ? 'bg-yellow-100' :
+                'bg-blue-100'
               }`}>
                 {email.action === 'approved' ? (
                   <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : (
+                ) : email.action === 'denied' ? (
                   <XCircle className="w-4 h-4 text-red-600" />
+                ) : email.action === 'security-action-required' ? (
+                  <AlertTriangle className="w-4 h-4 text-yellow-600" />
+                ) : (
+                  <Info className="w-4 h-4 text-blue-600" />
                 )}
               </div>
               <div className="flex-1">
@@ -38,9 +45,16 @@ const SentEmailsList: React.FC = () => {
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                     email.action === 'approved' 
                       ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
+                      : email.action === 'denied'
+                      ? 'bg-red-100 text-red-800'
+                      : email.action === 'security-action-required'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {email.action === 'approved' ? 'Approved' : 'Denied'}
+                    {email.action === 'approved' ? 'Approved' : 
+                     email.action === 'denied' ? 'Denied' :
+                     email.action === 'security-action-required' ? 'Security Alert' :
+                     'Security FYI'}
                   </span>
                   <span className="text-sm font-medium text-gray-900">
                     {email.visitorName}
