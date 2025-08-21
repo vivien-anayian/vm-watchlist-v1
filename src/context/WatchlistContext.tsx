@@ -9,6 +9,7 @@ export interface WatchlistLevel {
   notificationRecipients: string[];
   systemLogging: boolean;
   requiresManualApproval: boolean;
+  description?: string;
 }
 
 export interface WatchlistRule {
@@ -737,7 +738,8 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
         sendEmailNotifications: true,
         notificationRecipients: ['security-team', 'management'],
         systemLogging: true,
-        requiresManualApproval: true
+        requiresManualApproval: true,
+        description: 'For individuals who pose significant security threats or have serious incident history'
       },
       {
         id: 'medium-priority',
@@ -746,7 +748,8 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
         sendEmailNotifications: true,
         notificationRecipients: ['security-team'],
         systemLogging: true,
-        requiresManualApproval: false
+        requiresManualApproval: false,
+        description: 'For individuals with minor policy violations or behavioral concerns requiring monitoring'
       },
       {
         id: 'low-priority',
@@ -755,7 +758,8 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
         sendEmailNotifications: false,
         notificationRecipients: [],
         systemLogging: true,
-        requiresManualApproval: false
+        requiresManualApproval: false,
+        description: 'For individuals with minimal concerns or administrative tracking purposes'
       }
     ],
     watchlistRules: [

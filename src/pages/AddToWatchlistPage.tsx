@@ -38,6 +38,7 @@ const AddToWatchlistPage: React.FC = () => {
   const [newPhone, setNewPhone] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [selectedLevelId, setSelectedLevelId] = useState<string>('');
 
   useEffect(() => {
     const visitorId = searchParams.get('visitorId');
@@ -99,6 +100,11 @@ const AddToWatchlistPage: React.FC = () => {
     const lastNameErrors = validateField('lastName', formData.lastName);
     const emailErrors = validateField('primaryEmail', formData.primaryEmail);
     const phoneErrors = validateField('primaryPhone', formData.primaryPhone);
+    
+    // Validate watchlist level selection
+    if (!selectedLevelId) {
+      newErrors.levelId = 'Please select a watchlist level';
+    }
     
     Object.assign(newErrors, firstNameErrors, lastNameErrors, emailErrors, phoneErrors);
     
@@ -162,7 +168,10 @@ const AddToWatchlistPage: React.FC = () => {
       return;
     }
     
-    const newEntry = addToWatchlist(formData);
+    const newEntry = addToWatchlist({
+      ...formData,
+      levelId: selectedLevelId
+    });
     
     // If this was promoted from a visitor, update the visitor's watchlist status
     const visitorId = searchParams.get('visitorId');
@@ -623,17 +632,105 @@ const AddToWatchlistPage: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Watchlist level *
           </label>
-          <div className="relative">
-            <select
-              value={formData.levelId}
-              onChange={(e) => handleFieldChange('levelId', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
-            >
-              <option value="high-risk">High risk</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <p className="text-sm text-gray-500 mb-4">
+            Select the appropriate level based on the security risk this individual poses.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {visitorConfiguration.watchlistLevels.map((level) => {
+              const isSelected = selectedLevelId === level.id;
+              const colorClasses = {
+                red: 'border-red-200 bg-red-50',
+                yellow: 'border-yellow-200 bg-yellow-50', 
+                gray: 'border-gray-200 bg-gray-50'
+              };
+              const selectedColorClasses = {
+                red: 'border-red-500 bg-red-100 ring-2 ring-red-200',
+                yellow: 'border-yellow-500 bg-yellow-100 ring-2 ring-yellow-200',
+                gray: 'border-gray-500 bg-gray-100 ring-2 ring-gray-200'
+              };
+              const dotColors = {
+                red: 'bg-red-500',
+                yellow: 'bg-yellow-500',
+                gray: 'bg-gray-500'
+              };
+              
+              return (
+                <div
+                  key={level.id}
+                  onClick={() => setSelectedLevelId(level.id)}
+                  className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all hover:shadow-md ${
+                    isSelected 
+                      ? selectedColorClasses[level.color]
+                      : colorClasses[level.color] + ' hover:border-gray-300'
+                  }`}
+                >
+                  {/* Selection indicator */}
+                  {isSelected && (
+                    <div className="absolute top-3 right-3">
+                      <div className="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Level header */}
+                  <div className="flex items-center space-x-2 mb-3">
+                    <div className={`w-3 h-3 rounded-full ${dotColors[level.color]}`}></div>
+                    <span className="font-medium text-gray-900">{level.name}</span>
+                  </div>
+                  
+                  {/* Description */}
+                  {level.description && (
+                    <p className="text-sm text-gray-600 mb-4">{level.description}</p>
+                  )}
+                  
+                  {/* Settings breakdown */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Email notifications:</span>
+                      <span className={level.sendEmailNotifications ? 'text-green-600 font-medium' : 'text-gray-500'}>
+                        {level.sendEmailNotifications ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    
+                    {level.sendEmailNotifications && level.notificationRecipients.length > 0 && (
+                      <div className="ml-4 flex flex-wrap gap-1">
+                        {level.notificationRecipients.map((recipientId) => {
+                          const recipient = visitorConfiguration.notificationRecipients.find(r => r.id === recipientId);
+                          return recipient ? (
+                            <span key={recipientId} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-200 text-gray-700">
+                              {recipient.name}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">System logging:</span>
+                      <span className={level.systemLogging ? 'text-green-600 font-medium' : 'text-gray-500'}>
+                        {level.systemLogging ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Manual approval:</span>
+                      <span className={level.requiresManualApproval ? 'text-orange-600 font-medium' : 'text-gray-500'}>
+                        {level.requiresManualApproval ? 'REQUIRED' : 'OFF'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <p className="text-xs text-gray-500 mt-1">Assigned watchlist level for this individual.</p>
+          
+          {errors.levelId && (
+            <p className="mt-2 text-sm text-red-600">{errors.levelId}</p>
+          )}
         </div>
 
         {/* Notes */}
