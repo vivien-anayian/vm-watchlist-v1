@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Upload, X } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useToast } from '../hooks/useToast';
@@ -6,14 +6,46 @@ import Toast from '../components/Toast';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import SentEmailsList from '../components/SentEmailsList';
 import WatchlistRulesManager from '../components/WatchlistRulesManager';
+import { useLocation } from 'react-router-dom';
 
 const VisitorConfiguration: React.FC = () => {
   const { visitorConfiguration, updateVisitorConfiguration, clearSentEmails } = useWatchlist();
   const { toast, showToast, hideToast } = useToast();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'general' | 'scheduling' | 'notifications' | 'email' | 'watchlistLevels' | 'watchlistRules'>('general');
   const [localConfig, setLocalConfig] = useState(visitorConfiguration);
   const [hasChanges, setHasChanges] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Navigation warning for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (hasChanges) {
+        const confirmLeave = window.confirm(
+          'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
+        );
+        if (!confirmLeave) {
+          e.preventDefault();
+          window.history.pushState(null, '', location.pathname);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasChanges, location.pathname]);
 
   const handleConfigChange = (updates: any) => {
     const newConfig = {
@@ -32,6 +64,12 @@ const VisitorConfiguration: React.FC = () => {
     // Validate watchlist levels if they were updated
     if (updates.watchlistLevels) {
       validateWatchlistLevels(updates.watchlistLevels);
+    }
+  };
+
+  const handleRulesChange = (rulesHaveChanges: boolean) => {
+    if (rulesHaveChanges && !hasChanges) {
+      setHasChanges(true);
     }
   };
 
@@ -420,7 +458,7 @@ const VisitorConfiguration: React.FC = () => {
               Configure how visitors are matched against watchlist entries. Rules within a group use AND logic, while different groups use OR logic.
             </p>
           </div>
-          <WatchlistRulesManager />
+          <WatchlistRulesManager onRulesChange={handleRulesChange} />
         </div>
       )}
 
