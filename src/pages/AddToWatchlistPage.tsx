@@ -8,7 +8,7 @@ import Toast from '../components/Toast';
 const AddToWatchlistPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addToWatchlist, getVisitorById, updateVisitorWatchlistStatus } = useWatchlist();
+  const { addToWatchlist, getVisitorById, updateVisitorWatchlistStatus, visitorConfiguration } = useWatchlist();
   const { toast, showToast, hideToast } = useToast();
   
   // Progressive disclosure state
