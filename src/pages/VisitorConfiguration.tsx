@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Upload, X, Check } from 'lucide-react';
+import { ChevronDown, Upload, X } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
@@ -109,17 +109,6 @@ const VisitorConfiguration: React.FC = () => {
       level.id === levelId ? { ...level, [field]: value } : level
     );
     handleConfigChange({ watchlistLevels: updatedLevels });
-  };
-
-  const toggleNotificationRecipient = (levelId: string, recipientId: string) => {
-    const level = localConfig.watchlistLevels.find(l => l.id === levelId);
-    if (!level) return;
-    
-    const updatedRecipients = level.notificationRecipients.includes(recipientId)
-      ? level.notificationRecipients.filter(id => id !== recipientId)
-      : [...level.notificationRecipients, recipientId];
-    
-    handleWatchlistLevelChange(levelId, 'notificationRecipients', updatedRecipients);
   };
 
   return (

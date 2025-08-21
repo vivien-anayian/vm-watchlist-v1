@@ -638,9 +638,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     notificationRecipients: [
       { id: 'building-security', name: 'Building security', type: 'security' },
       { id: 'workplace-member', name: 'Workplace member', type: 'member' },
-      { id: 'security-team-alpha', name: 'Security Team Alpha', type: 'team' },
-      { id: 'management-team', name: 'Management Team', type: 'team' },
-      { id: 'reception-staff', name: 'Reception Staff', type: 'team' }
+      { id: 'security-team-alpha', name: '{Security Team Alpha}', type: 'team' },
+      { id: 'management-team', name: '{Management Team}', type: 'team' },
+      { id: 'reception-staff', name: '{Reception Staff}', type: 'team' }
     ],
     emailTemplate: {
       entryInstructions: 'Entrance on King is under construction, use alternate entrance to the south.\nUse the Kiosk for quick check-in with security. Adding one more line to test.',
