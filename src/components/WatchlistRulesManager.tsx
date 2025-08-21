@@ -1,10 +1,11 @@
 import React from 'react';
 import { Plus, Trash2, ChevronDown } from 'lucide-react';
-import { useWatchlist, WatchlistRule, WatchlistRuleGroup } from '../context/WatchlistContext';
+import { useWatchlist } from '../context/WatchlistContext';
+import type { WatchlistRule, WatchlistRuleGroup } from '../context/WatchlistContext';
 
 const WatchlistRulesManager: React.FC = () => {
   const {
-    visitorConfiguration,
+    visitorConfiguration: { watchlistRules },
     addWatchlistRuleGroup,
     removeWatchlistRuleGroup,
     addRuleToGroup,
@@ -12,7 +13,6 @@ const WatchlistRulesManager: React.FC = () => {
     updateRule
   } = useWatchlist();
 
-  const ruleGroups = visitorConfiguration.watchlistRules;
 
   const getParameterLabel = (parameter: string) => {
     switch (parameter) {
@@ -46,13 +46,13 @@ const WatchlistRulesManager: React.FC = () => {
     <div className="space-y-6">
       {/* Rule Groups */}
       <div className="space-y-4">
-        {ruleGroups.map((group, groupIndex) => (
+        {watchlistRules.map((group, groupIndex) => (
           <div key={group.id} className="border border-gray-200 rounded-lg p-6">
             {/* Group Header */}
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h4 className="text-lg font-medium text-gray-900">
-                  {group.id === 'default-group' ? 'Default Group' : `Group ${groupIndex + 1}`}
+                  {group.id === 'default-group' ? 'Default Group' : `Group ${groupIndex}`}
                 </h4>
                 <p className="text-sm text-gray-500 mt-1">
                   {getGroupDescription(group)}
@@ -171,8 +171,8 @@ const WatchlistRulesManager: React.FC = () => {
           <p><strong>Match types:</strong></p>
           <ul className="list-disc list-inside ml-4 space-y-1">
             <li><strong>Exact:</strong> Values must match exactly (case-insensitive)</li>
-            <li><strong>Contains:</strong> One value contains the other</li>
-            <li><strong>Partial:</strong> Values share common parts</li>
+            <li><strong>Contains:</strong> Visitor value contains watchlist value or vice versa</li>
+            <li><strong>Partial:</strong> Partial matching (useful for phone numbers and email domains)</li>
           </ul>
         </div>
       </div>

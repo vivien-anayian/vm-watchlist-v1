@@ -417,9 +417,10 @@ const VisitorConfiguration: React.FC = () => {
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Watchlist rules</h3>
             <p className="text-sm text-gray-600">
-              Configure watchlist rules and matching criteria.
+              Configure how visitors are matched against watchlist entries. Rules within a group use AND logic, while different groups use OR logic.
             </p>
           </div>
+          <WatchlistRulesManager />
         </div>
       )}
 

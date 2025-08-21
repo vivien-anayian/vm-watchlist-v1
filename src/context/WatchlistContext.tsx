@@ -1324,6 +1324,12 @@ Building Security Team`
       denyVisitor,
       getSentEmails,
       clearSentEmails
+      addWatchlistRuleGroup,
+      removeWatchlistRuleGroup,
+      updateWatchlistRuleGroup,
+      addRuleToGroup,
+      removeRuleFromGroup,
+      updateRule
     }}>
       {children}
     </WatchlistContext.Provider>
