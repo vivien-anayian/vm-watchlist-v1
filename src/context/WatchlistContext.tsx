@@ -51,6 +51,19 @@ export interface WatchlistRuleGroup {
   logic: 'AND' | 'OR';
 }
 
+export interface VisitorConfigurationType {
+  manualValidation: boolean;
+  requireApproval: boolean;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  autoCheckout: boolean;
+  checkoutTime: number;
+  allowSelfCheckout: boolean;
+  requirePhoto: boolean;
+  requireSignature: boolean;
+  customFields: string[];
+}
+
 interface WatchlistContextType {
   // Watchlist state
   watchlistEntries: WatchlistEntry[];
@@ -63,6 +76,10 @@ interface WatchlistContextType {
   // Rules state
   watchlistRules: WatchlistRuleGroup[];
   setWatchlistRules: React.Dispatch<React.SetStateAction<WatchlistRuleGroup[]>>;
+  
+  // Configuration state
+  visitorConfiguration: VisitorConfigurationType;
+  setVisitorConfiguration: React.Dispatch<React.SetStateAction<VisitorConfigurationType>>;
   
   // Configuration state
   hasChanges: boolean;
@@ -85,6 +102,9 @@ interface WatchlistContextType {
   // Rules functions
   updateWatchlistRules: (rules: WatchlistRuleGroup[]) => void;
   checkWatchlistMatch: (visitor: Partial<VisitorEntry>) => { isMatch: boolean; matchedEntries: string[] };
+  
+  // Configuration functions
+  updateVisitorConfiguration: (config: Partial<VisitorConfigurationType>) => void;
   
   // Save function
   saveConfiguration: () => Promise<void>;
@@ -196,6 +216,19 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
   ]);
 
   const [hasChanges, setHasChanges] = useState(false);
+
+  const [visitorConfiguration, setVisitorConfiguration] = useState<VisitorConfigurationType>({
+    manualValidation: false,
+    requireApproval: true,
+    emailNotifications: true,
+    smsNotifications: false,
+    autoCheckout: false,
+    checkoutTime: 8,
+    allowSelfCheckout: true,
+    requirePhoto: false,
+    requireSignature: false,
+    customFields: []
+  });
 
   // Watchlist functions
   const addWatchlistEntry = (entry: Omit<WatchlistEntry, 'id' | 'dateAdded'>) => {
@@ -325,6 +358,12 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     setHasChanges(true);
   };
 
+  // Configuration functions
+  const updateVisitorConfiguration = (config: Partial<VisitorConfigurationType>) => {
+    setVisitorConfiguration(prev => ({ ...prev, ...config }));
+    setHasChanges(true);
+  };
+
   const checkWatchlistMatch = (visitor: Partial<VisitorEntry>): { isMatch: boolean; matchedEntries: string[] } => {
     const matchedEntries: string[] = [];
     
@@ -390,6 +429,8 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     setVisitorEntries,
     watchlistRules,
     setWatchlistRules,
+    visitorConfiguration,
+    setVisitorConfiguration,
     hasChanges,
     setHasChanges,
     
@@ -406,6 +447,7 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     checkOutVisitor,
     updateWatchlistRules,
     checkWatchlistMatch,
+    updateVisitorConfiguration,
     saveConfiguration
   };
 
