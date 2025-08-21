@@ -46,6 +46,10 @@ const CreateNewVisit: React.FC = () => {
   const [notesToStaff, setNotesToStaff] = useState('');
   const [notesToVisitors, setNotesToVisitors] = useState('');
 
+  const checkWatchlistMatchWithRules = (visitor: any) => {
+    return checkWatchlistMatch(visitor.firstName, visitor.lastName);
+  };
+
   const updateVisitor = (id: string, field: string, value: string) => {
     setVisitors(prev => prev.map(visitor => {
       if (visitor.id === id) {
@@ -53,10 +57,12 @@ const CreateNewVisit: React.FC = () => {
         
         // Check for watchlist match when first or last name changes
         if (field === 'firstName' || field === 'lastName') {
-          const match = checkWatchlistMatch(
-            field === 'firstName' ? value : visitor.firstName,
-            field === 'lastName' ? value : visitor.lastName
-          );
+          const match = checkWatchlistMatchWithRules({
+            firstName: field === 'firstName' ? value : visitor.firstName,
+            lastName: field === 'lastName' ? value : visitor.lastName,
+            email: visitor.email,
+            phone: '555-0123' // Default for demo
+          });
           
           updated.isOnWatchlist = !!match;
           updated.watchlistEntry = match;
@@ -99,12 +105,7 @@ const CreateNewVisit: React.FC = () => {
     const createdVisitors: CreatedVisitor[] = [];
     
     validVisitors.forEach(visitor => {
-      const watchlistMatch = checkWatchlistMatchWithRules({
-        firstName: visitor.firstName,
-        lastName: visitor.lastName,
-        email: visitor.email,
-        phone: '555-0123' // Default for demo
-      });
+      const watchlistMatch = checkWatchlistMatch(visitor.firstName, visitor.lastName);
       const newVisitor = addVisitor({
         name: `${visitor.firstName} ${visitor.lastName}`,
         email: visitor.email || 'no-email@example.com',
@@ -406,6 +407,14 @@ const CreateNewVisit: React.FC = () => {
           </button>
         </div>
       </form>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
+      )}
     </div>
   );
 };
