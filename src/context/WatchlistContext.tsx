@@ -586,11 +586,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       arrival: '10:00 AM CDT',
       departure: '3:00 PM CDT',
       host: 'Alex Smith',
-    }
-  ]
-  )
-}Liz Tenant',
-      hostEmail: 'liz.tenant@30eastmcdonald.com',
+      hostEmail: 'alex.smith@30eastmcdonald.com',
       hostPhone: '555-0209 ex. 9001',
       hostCompany: '30 East McDonald',
       hostCompanyLocation: '30 East McDonald Street, 11 Fl, Chicago, IL',
@@ -751,10 +747,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const getWatchlistLevelColor = (id: string): string => {
     const level = getWatchlistLevelById(id);
-        if (!rule.value) return false;
-        const searchValue = rule.value.toLowerCase();
-        return watchlistValues.some(wValue => wValue.includes(searchValue)) ||
-               visitorValue.includes(searchValue);
+    if (!level) return 'bg-gray-100 text-gray-800';
+    
+    switch (level.color) {
       case 'red':
         return 'bg-red-100 text-red-800';
       case 'yellow':
@@ -763,6 +758,64 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const checkWatchlistMatchWithRules = (visitorData: { firstName: string; lastName: string; email: string; phone: string }): WatchlistEntry | null => {
+    const { firstName, lastName, email, phone } = visitorData;
+    
+    if (!firstName.trim() || !lastName.trim()) return null;
+    
+    return watchlistEntries.find(entry => {
+      // Check each rule group - if any group matches completely, return the entry
+      return visitorConfiguration.watchlistRules.some(group => {
+        // All rules in a group must match for the group to match
+        return group.rules.every(rule => {
+          const visitorValue = visitorData[rule.parameter]?.toLowerCase() || '';
+          
+          switch (rule.parameter) {
+            case 'firstName':
+              const watchlistFirstNames = [entry.firstName, ...entry.alternativeFirstNames].map(n => n.toLowerCase());
+              return checkRuleMatch(rule, visitorValue, watchlistFirstNames);
+            
+            case 'lastName':
+              const watchlistLastNames = [entry.lastName, ...entry.alternativeLastNames].map(n => n.toLowerCase());
+              return checkRuleMatch(rule, visitorValue, watchlistLastNames);
+            
+            case 'email':
+              const watchlistEmails = [entry.primaryEmail, ...entry.additionalEmails].map(e => e.toLowerCase());
+              return checkRuleMatch(rule, visitorValue, watchlistEmails);
+            
+            case 'phone':
+              const watchlistPhones = [entry.primaryPhone, ...entry.additionalPhones].map(p => p.toLowerCase());
+              return checkRuleMatch(rule, visitorValue, watchlistPhones);
+            
+            default:
+              return false;
+          }
+        });
+      });
+    }) || null;
+  };
+
+  const checkRuleMatch = (rule: WatchlistRule, visitorValue: string, watchlistValues: string[]): boolean => {
+    switch (rule.type) {
+      case 'exact':
+        return watchlistValues.some(wValue => wValue === visitorValue);
+      
+      case 'partial':
+        return watchlistValues.some(wValue => 
+          wValue.includes(visitorValue) || visitorValue.includes(wValue)
+        );
+      
+      case 'contains':
+        if (!rule.value) return false;
+        const searchValue = rule.value.toLowerCase();
+        return watchlistValues.some(wValue => wValue.includes(searchValue)) ||
+               visitorValue.includes(searchValue);
+      
+      default:
+        return false;
     }
   };
 
@@ -1403,6 +1456,7 @@ Building Security Team`
       updateVisitorStatus,
       updateVisitorConfiguration,
       checkWatchlistMatch,
+      checkWatchlistMatchWithRules,
       getMatchedFields,
       getWatchlistEntryForVisitor,
       getPendingApprovalVisitors,
