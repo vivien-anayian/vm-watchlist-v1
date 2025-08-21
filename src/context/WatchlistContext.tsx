@@ -1295,6 +1295,85 @@ Building Security Team`
     localStorage.removeItem('sentEmails');
   };
 
+  const addWatchlistRuleGroup = (): WatchlistRuleGroup => {
+    const newGroup: WatchlistRuleGroup = {
+      id: `group-${Date.now()}`,
+      rules: []
+    };
+    
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: [...prev.watchlistRules, newGroup]
+    }));
+    
+    return newGroup;
+  };
+
+  const removeWatchlistRuleGroup = (groupId: string) => {
+    // Don't allow removing the default group
+    if (groupId === 'default-group') return;
+    
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.filter(group => group.id !== groupId)
+    }));
+  };
+
+  const updateWatchlistRuleGroup = (groupId: string, rules: WatchlistRule[]) => {
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId ? { ...group, rules } : group
+      )
+    }));
+  };
+
+  const addRuleToGroup = (groupId: string): WatchlistRule => {
+    const newRule: WatchlistRule = {
+      id: `rule-${Date.now()}`,
+      parameter: 'firstName',
+      type: 'exact'
+    };
+    
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId 
+          ? { ...group, rules: [...group.rules, newRule] }
+          : group
+      )
+    }));
+    
+    return newRule;
+  };
+
+  const removeRuleFromGroup = (groupId: string, ruleId: string) => {
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId
+          ? { ...group, rules: group.rules.filter(rule => rule.id !== ruleId) }
+          : group
+      )
+    }));
+  };
+
+  const updateRule = (groupId: string, ruleId: string, updates: Partial<WatchlistRule>) => {
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId
+          ? {
+              ...group,
+              rules: group.rules.map(rule =>
+                rule.id === ruleId ? { ...rule, ...updates } : rule
+              )
+            }
+          : group
+      )
+    }));
+  };
+
   return (
     <WatchlistContext.Provider value={{
       watchlistEntries,
