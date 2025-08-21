@@ -58,6 +58,17 @@ export interface WatchlistLevel {
   requiresManualApproval: boolean;
 }
 
+export interface WatchlistRule {
+  id: string;
+  parameter: 'firstName' | 'lastName' | 'email' | 'phone';
+  type: 'exact' | 'contains' | 'partial';
+}
+
+export interface WatchlistRuleGroup {
+  id: string;
+  rules: WatchlistRule[];
+}
+
 export interface NotificationRecipient {
   id: string;
   name: string;
@@ -70,6 +81,7 @@ export interface VisitorConfiguration {
   sendQRCode: boolean;
   watchlistLevels: WatchlistLevel[];
   notificationRecipients: NotificationRecipient[];
+  watchlistRules: WatchlistRuleGroup[];
   emailTemplate: {
     bannerImage?: string;
     entryInstructions: string;
@@ -110,6 +122,7 @@ interface WatchlistContextType {
   updateVisitorStatus: (id: string, status: VisitorEntry['status']) => void;
   updateVisitorConfiguration: (config: Partial<VisitorConfiguration>) => void;
   checkWatchlistMatch: (firstName: string, lastName: string) => WatchlistEntry | null;
+  checkWatchlistMatchWithRules: (visitorData: { firstName: string; lastName: string; email: string; phone: string }) => WatchlistEntry | null;
   getMatchedFields: (visitorName: string, visitorEmail: string, watchlistEntry: WatchlistEntry) => string[];
   getWatchlistEntryForVisitor: (visitorId: string) => WatchlistEntry | null;
   getPendingApprovalVisitors: () => VisitorEntry[];
@@ -117,6 +130,12 @@ interface WatchlistContextType {
   denyVisitor: (visitorId: string, deniedBy: string) => void;
   getSentEmails: () => SentEmail[];
   clearSentEmails: () => void;
+  addWatchlistRuleGroup: () => WatchlistRuleGroup;
+  removeWatchlistRuleGroup: (groupId: string) => void;
+  updateWatchlistRuleGroup: (groupId: string, rules: WatchlistRule[]) => void;
+  addRuleToGroup: (groupId: string) => WatchlistRule;
+  removeRuleFromGroup: (groupId: string, ruleId: string) => void;
+  updateRule: (groupId: string, ruleId: string, updates: Partial<WatchlistRule>) => void;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -672,6 +691,15 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       { id: 'management-team', name: '{Management Team}', type: 'team' },
       { id: 'reception-staff', name: '{Reception Staff}', type: 'team' }
     ],
+    watchlistRules: [
+      {
+        id: 'default-group',
+        rules: [
+          { id: 'rule-1', parameter: 'firstName', type: 'exact' },
+          { id: 'rule-2', parameter: 'lastName', type: 'exact' }
+        ]
+      }
+    ],
     emailTemplate: {
       entryInstructions: 'Entrance on King is under construction, use alternate entrance to the south.\nUse the Kiosk for quick check-in with security. Adding one more line to test.',
       buildingGuidelines: 'Do not share this pass with anyone.'
@@ -855,6 +883,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       ...config,
       watchlistLevels: config.watchlistLevels || prev.watchlistLevels,
       notificationRecipients: config.notificationRecipients || prev.notificationRecipients,
+      watchlistRules: config.watchlistRules || prev.watchlistRules,
       emailTemplate: {
         ...prev.emailTemplate,
         ...config.emailTemplate
