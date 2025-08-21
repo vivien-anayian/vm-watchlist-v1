@@ -4,9 +4,10 @@ import { useWatchlist } from '../context/WatchlistContext';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
+import SentEmailsList from '../components/SentEmailsList';
 
 const VisitorConfiguration: React.FC = () => {
-  const { visitorConfiguration, updateVisitorConfiguration } = useWatchlist();
+  const { visitorConfiguration, updateVisitorConfiguration, clearSentEmails } = useWatchlist();
   const { toast, showToast, hideToast } = useToast();
   const [activeTab, setActiveTab] = useState<'general' | 'scheduling' | 'notifications' | 'email' | 'watchlistLevels' | 'watchlistRules'>('general');
   const [localConfig, setLocalConfig] = useState(visitorConfiguration);
@@ -661,6 +662,32 @@ const VisitorConfiguration: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Sent Emails Demo Section */}
+      {activeTab === 'email' && (
+        <div className="mt-12 border-t border-gray-200 pt-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-lg font-medium text-gray-900">Sent Emails (Demo)</h4>
+              <p className="text-sm text-gray-600 mt-1">
+                View email notifications sent during the approval workflow for demonstration purposes.
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (window.confirm('Clear all sent emails from demo log?')) {
+                  clearSentEmails();
+                  showToast('Sent emails cleared', 'info');
+                }
+              }}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Clear all
+            </button>
+          </div>
+          <SentEmailsList />
         </div>
       )}
       
