@@ -5,8 +5,14 @@ export interface WatchlistEntry {
   id: string;
   firstName: string;
   lastName: string;
+  alternativeFirstNames: string[];
+  alternativeLastNames: string[];
   email: string;
   phone: string;
+  primaryEmail: string;
+  additionalEmails: string[];
+  primaryPhone: string;
+  additionalPhones: string[];
   reason: string;
   dateAdded: string;
   addedBy: string;
@@ -133,6 +139,12 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
       lastName: 'Doe',
       email: 'john.doe@example.com',
       phone: '555-0123',
+      alternativeFirstNames: [],
+      alternativeLastNames: [],
+      primaryEmail: 'john.doe@example.com',
+      additionalEmails: [],
+      primaryPhone: '555-0123',
+      additionalPhones: [],
       reason: 'Security concern',
       dateAdded: '2024-01-15',
       addedBy: 'Security Team',
@@ -145,6 +157,12 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
       lastName: 'Smith',
       email: 'jane.smith@example.com',
       phone: '555-0456',
+      alternativeFirstNames: [],
+      alternativeLastNames: [],
+      primaryEmail: 'jane.smith@example.com',
+      additionalEmails: [],
+      primaryPhone: '555-0456',
+      additionalPhones: [],
       reason: 'Harassment complaint',
       dateAdded: '2024-01-20',
       addedBy: 'HR Department',
