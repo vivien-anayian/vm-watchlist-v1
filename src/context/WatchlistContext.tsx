@@ -522,7 +522,11 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
       hostCompany: 'Security Consulting',
       hostCompanyLocation: '1500 Technology Drive, 5th Floor, Austin, TX',
       floor: 'Floor 5',
-      watchlistMatch: true,
+      watchlis
+    }
+  ]
+  )
+}tMatch: true,
       watchlistLevelId: 'high-risk',
       approvalStatus: 'pending'
     },
