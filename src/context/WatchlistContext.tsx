@@ -1,52 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Types
-export interface WatchlistEntry {
-  id: string;
-  firstName: string;
-  lastName: string;
-  alternativeFirstNames: string[];
-  alternativeLastNames: string[];
-  email: string;
-  phone: string;
-  primaryEmail: string;
-  additionalEmails: string[];
-  primaryPhone: string;
-  additionalPhones: string[];
-  reason: string;
-  dateAdded: string;
-  addedBy: string;
-  status: 'active' | 'inactive';
-  notes?: string;
-}
-
-export interface VisitorEntry {
+export interface WatchlistLevel {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  company: string;
-  purpose: string;
-  host: string;
-  hostEmail: string;
-  hostPhone: string;
-  hostCompany: string;
-  checkInTime: string;
-  checkOutTime?: string;
-  status: 'checked-in' | 'checked-out' | 'pending-approval' | 'approved' | 'denied';
-  watchlistMatch?: boolean;
-  matchedEntries?: string[];
-  approvedBy?: string;
-  approvalTime?: string;
-  deniedBy?: string;
-  denialTime?: string;
-  denialReason?: string;
+  color: 'red' | 'yellow' | 'gray';
+  sendEmailNotifications: boolean;
+  notificationRecipients: string[];
+  systemLogging: boolean;
+  requiresManualApproval: boolean;
 }
 
 export interface WatchlistRule {
   id: string;
-  field: 'firstName' | 'lastName' | 'email' | 'phone';
-  operator: 'exact' | 'contains' | 'partial';
+  parameter: 'firstName' | 'lastName' | 'email' | 'phone';
+  type: 'exact' | 'contains' | 'partial';
   value?: string;
 }
 
@@ -54,66 +22,131 @@ export interface WatchlistRuleGroup {
   id: string;
   name: string;
   rules: WatchlistRule[];
-  logic: 'AND' | 'OR';
+}
+
+export interface WatchlistEntry {
+  id: string;
+  firstName: string;
+  lastName: string;
+  alternativeFirstNames: string[];
+  alternativeLastNames: string[];
+  primaryEmail: string;
+  additionalEmails: string[];
+  primaryPhone: string;
+  additionalPhones: string[];
+  levelId: string;
+  notes: string;
+  reportedBy: string;
+  lastUpdated: string;
+  attachments: Array<{
+    id: string;
+    name: string;
+    url: string;
+    uploadedAt: string;
+  }>;
+  aliases: string[];
+}
+
+export interface VisitorEntry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: 'Checked in' | 'Upcoming' | 'No show' | 'Validated' | 'Canceled';
+  date: string;
+  arrival: string;
+  departure: string;
+  host: string;
+  hostEmail: string;
+  hostPhone: string;
+  hostCompany: string;
+  hostCompanyLocation: string;
+  floor: string;
+  watchlistMatch?: boolean;
+  watchlistLevelId?: string;
+  approvalStatus?: 'pending' | 'approved' | 'denied';
+  approvedBy?: string;
+  deniedBy?: string;
+}
+
+export interface MultiSelectOption {
+  id: string;
+  name: string;
+  type: 'security' | 'member' | 'team';
+}
+
+export interface SentEmail {
+  id: string;
+  visitorName: string;
+  hostName: string;
+  hostEmail: string;
+  subject: string;
+  body: string;
+  action: 'approved' | 'denied' | 'security-action-required' | 'security-fyi';
+  sentAt: string;
 }
 
 export interface VisitorConfigurationType {
   manualValidation: boolean;
-  requireApproval: boolean;
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  autoCheckout: boolean;
-  checkoutTime: number;
-  allowSelfCheckout: boolean;
-  requirePhoto: boolean;
-  requireSignature: boolean;
-  customFields: string[];
+  earlyCheckinMinutes: number;
+  sendQRCode: boolean;
+  watchlistLevels: WatchlistLevel[];
+  watchlistRules: WatchlistRuleGroup[];
+  notificationRecipients: MultiSelectOption[];
+  emailTemplate: {
+    bannerImage?: string;
+    entryInstructions: string;
+    buildingGuidelines: string;
+  };
 }
 
 interface WatchlistContextType {
-  // Watchlist state
+  // State
   watchlistEntries: WatchlistEntry[];
-  setWatchlistEntries: React.Dispatch<React.SetStateAction<WatchlistEntry[]>>;
-  
-  // Visitor state
   visitorEntries: VisitorEntry[];
-  setVisitorEntries: React.Dispatch<React.SetStateAction<VisitorEntry[]>>;
-  
-  // Rules state
-  watchlistRules: WatchlistRuleGroup[];
-  setWatchlistRules: React.Dispatch<React.SetStateAction<WatchlistRuleGroup[]>>;
-  
-  // Configuration state
   visitorConfiguration: VisitorConfigurationType;
-  setVisitorConfiguration: React.Dispatch<React.SetStateAction<VisitorConfigurationType>>;
-  
-  // Configuration state
-  hasChanges: boolean;
-  setHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
+  sentEmails: SentEmail[];
+  pendingApprovalCount: number;
   
   // Watchlist functions
-  addWatchlistEntry: (entry: Omit<WatchlistEntry, 'id' | 'dateAdded'>) => void;
-  updateWatchlistEntry: (id: string, updates: Partial<WatchlistEntry>) => void;
-  deleteWatchlistEntry: (id: string) => void;
   searchWatchlist: (query: string) => WatchlistEntry[];
+  addToWatchlist: (entry: any) => WatchlistEntry;
+  updateWatchlistEntry: (id: string, updates: any) => void;
+  removeFromWatchlist: (id: string) => void;
+  getWatchlistEntryById: (id: string) => WatchlistEntry | undefined;
+  getWatchlistLevelName: (levelId: string) => string;
+  getWatchlistLevelColor: (levelId: string) => string;
+  getWatchlistLevelById: (levelId: string) => WatchlistLevel | undefined;
   
   // Visitor functions
-  addVisitor: (visitor: Omit<VisitorEntry, 'id' | 'checkInTime' | 'status'>) => void;
-  updateVisitor: (id: string, updates: Partial<VisitorEntry>) => void;
   searchVisitors: (query: string) => VisitorEntry[];
+  addVisitor: (visitor: any) => VisitorEntry;
+  updateVisitorStatus: (id: string, status: string) => void;
+  getVisitorById: (id: string) => VisitorEntry | undefined;
+  getPendingApprovalVisitors: () => VisitorEntry[];
   approveVisitor: (id: string, approvedBy: string) => void;
-  denyVisitor: (id: string, deniedBy: string, reason: string) => void;
-  checkOutVisitor: (id: string) => void;
+  denyVisitor: (id: string, deniedBy: string) => void;
+  updateVisitorWatchlistStatus: (id: string, hasMatch: boolean, levelId?: string) => void;
   
-  // Rules functions
-  updateWatchlistRules: (rules: WatchlistRuleGroup[]) => void;
-  checkWatchlistMatch: (visitor: Partial<VisitorEntry>) => { isMatch: boolean; matchedEntries: string[] };
+  // Watchlist matching
+  checkWatchlistMatch: (firstName: string, lastName: string) => WatchlistEntry | null;
+  checkWatchlistMatchWithRules: (visitor: any) => WatchlistEntry | null;
+  getWatchlistEntryForVisitor: (visitorId: string) => WatchlistEntry | null;
+  getMatchedFields: (visitorName: string, visitorEmail: string, entry: WatchlistEntry) => string[];
   
-  // Configuration functions
+  // Configuration
   updateVisitorConfiguration: (config: Partial<VisitorConfigurationType>) => void;
   
-  // Save function
-  saveConfiguration: () => Promise<void>;
+  // Email functions
+  getSentEmails: () => SentEmail[];
+  clearSentEmails: () => void;
+  
+  // Rule management
+  addWatchlistRuleGroup: () => void;
+  removeWatchlistRuleGroup: (groupId: string) => void;
+  addRuleToGroup: (groupId: string) => void;
+  removeRuleFromGroup: (groupId: string, ruleId: string) => void;
+  updateRule: (groupId: string, ruleId: string, updates: Partial<WatchlistRule>) => void;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -131,43 +164,48 @@ interface WatchlistProviderProps {
 }
 
 export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }) => {
-  // State
+  // Initial data
   const [watchlistEntries, setWatchlistEntries] = useState<WatchlistEntry[]>([
     {
       id: '1',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      phone: '555-0123',
-      alternativeFirstNames: [],
+      firstName: 'Willy',
+      lastName: 'Wonka',
+      alternativeFirstNames: ['William'],
       alternativeLastNames: [],
-      primaryEmail: 'john.doe@example.com',
+      primaryEmail: 'willy.wonka@chocolate.com',
       additionalEmails: [],
       primaryPhone: '555-0123',
       additionalPhones: [],
-      reason: 'Security concern',
-      dateAdded: '2024-01-15',
-      addedBy: 'Security Team',
-      status: 'active',
-      notes: 'Attempted unauthorized access'
+      levelId: 'high-risk',
+      notes: 'Known security risk. Previous incidents of unauthorized access attempts.',
+      reportedBy: 'Security Steve',
+      lastUpdated: 'Apr 9, 2024',
+      attachments: [
+        {
+          id: 'att1',
+          name: 'security-photo.jpg',
+          url: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1',
+          uploadedAt: 'Apr 9, 2024 - 2:19 PM CDT'
+        }
+      ],
+      aliases: ['William']
     },
     {
       id: '2',
       firstName: 'Jane',
       lastName: 'Smith',
-      email: 'jane.smith@example.com',
-      phone: '555-0456',
       alternativeFirstNames: [],
-      alternativeLastNames: [],
+      alternativeLastNames: ['Johnson'],
       primaryEmail: 'jane.smith@example.com',
-      additionalEmails: [],
+      additionalEmails: ['j.smith@company.com'],
       primaryPhone: '555-0456',
       additionalPhones: [],
-      reason: 'Harassment complaint',
-      dateAdded: '2024-01-20',
-      addedBy: 'HR Department',
-      status: 'active',
-      notes: 'Multiple complaints filed'
+      levelId: 'high-risk',
+      notes: 'Multiple harassment complaints filed. Do not allow entry without escort.',
+      reportedBy: 'HR Department',
+      lastUpdated: 'Mar 15, 2024',
+      attachments: [],
+      aliases: []
     }
   ]);
 
@@ -177,100 +215,109 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
       name: 'Marcus Rodriguez',
       email: 'marcus.rodriguez@techcorp.com',
       phone: '555-0101',
-      company: 'TechCorp Solutions',
-      purpose: 'Business meeting',
+      status: 'Checked in',
+      date: '2024-06-17',
+      arrival: '9:00 AM EST',
+      departure: '5:00 PM EST',
       host: 'Alex Smith',
-      hostEmail: 'alex.smith@30eastmcdonald.com',
-      hostPhone: '555-0202 ex. 1001',
-      hostCompany: '30 East McDonald',
-      checkInTime: '2024-01-25T09:00:00Z',
-      status: 'checked-in',
+      hostEmail: 'alex.smith@company.com',
+      hostPhone: '555-0200',
+      hostCompany: 'TechCorp Industries',
+      hostCompanyLocation: '1500 Technology Drive, 15th Floor, Austin, TX',
+      floor: 'Floor 15',
       watchlistMatch: false
     },
     {
       id: '2',
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@designstudio.com',
-      phone: '555-0303',
-      company: 'Creative Design Studio',
-      purpose: 'Project consultation',
-      host: 'Liz Tenant',
-      hostEmail: 'liz.tenant@30eastmcdonald.com',
-      hostPhone: '555-0209 ex. 9001',
-      hostCompany: '30 East McDonald',
-      checkInTime: '2024-01-25T10:30:00Z',
-      status: 'pending-approval',
+      name: 'Willy Wonka',
+      email: 'willy.wonka@chocolate.com',
+      phone: '555-0123',
+      status: 'Upcoming',
+      date: '2024-06-17',
+      arrival: '10:00 AM EST',
+      departure: '2:00 PM EST',
+      host: 'Sarah Johnson',
+      hostEmail: 'sarah.johnson@company.com',
+      hostPhone: '555-0300',
+      hostCompany: 'Design Studio',
+      hostCompanyLocation: '1500 Technology Drive, 12th Floor, Austin, TX',
+      floor: 'Floor 12',
       watchlistMatch: true,
-      matchedEntries: ['2']
+      watchlistLevelId: 'high-risk',
+      approvalStatus: 'pending'
     }
   ]);
 
-  const [watchlistRules, setWatchlistRules] = useState<WatchlistRuleGroup[]>([
-    {
-      id: 'default',
-      name: 'Default Group',
-      logic: 'AND',
-      rules: [
-        {
-          id: '1',
-          field: 'firstName',
-          operator: 'partial',
-          value: ''
-        },
-        {
-          id: '2',
-          field: 'lastName',
-          operator: 'exact',
-          value: ''
-        },
-        {
-          id: '3',
-          field: 'phone',
-          operator: 'exact',
-          value: ''
-        }
-      ]
-    }
-  ]);
-
-  const [hasChanges, setHasChanges] = useState(false);
+  const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
 
   const [visitorConfiguration, setVisitorConfiguration] = useState<VisitorConfigurationType>({
     manualValidation: false,
-    requireApproval: true,
-    emailNotifications: true,
-    smsNotifications: false,
-    autoCheckout: false,
-    checkoutTime: 8,
-    allowSelfCheckout: true,
-    requirePhoto: false,
-    requireSignature: false,
-    customFields: []
+    earlyCheckinMinutes: 15,
+    sendQRCode: true,
+    watchlistLevels: [
+      {
+        id: 'high-risk',
+        name: 'High risk',
+        color: 'red',
+        sendEmailNotifications: true,
+        notificationRecipients: ['security-team', 'management'],
+        systemLogging: true,
+        requiresManualApproval: true
+      },
+      {
+        id: 'medium-priority',
+        name: 'Medium priority',
+        color: 'yellow',
+        sendEmailNotifications: true,
+        notificationRecipients: ['security-team'],
+        systemLogging: true,
+        requiresManualApproval: false
+      },
+      {
+        id: 'low-priority',
+        name: 'Low priority',
+        color: 'gray',
+        sendEmailNotifications: false,
+        notificationRecipients: [],
+        systemLogging: true,
+        requiresManualApproval: false
+      }
+    ],
+    watchlistRules: [
+      {
+        id: 'default-group',
+        name: 'Default Group',
+        rules: [
+          {
+            id: 'rule-1',
+            parameter: 'firstName',
+            type: 'partial'
+          },
+          {
+            id: 'rule-2',
+            parameter: 'lastName',
+            type: 'exact'
+          }
+        ]
+      }
+    ],
+    notificationRecipients: [
+      { id: 'security-team', name: 'Security Team', type: 'security' },
+      { id: 'management', name: 'Management', type: 'team' },
+      { id: 'front-desk', name: 'Front Desk', type: 'member' }
+    ],
+    emailTemplate: {
+      entryInstructions: 'Please check in at the front desk and present a valid ID.',
+      buildingGuidelines: 'All visitors must be escorted at all times. No photography allowed.'
+    }
   });
 
+  // Computed values
+  const pendingApprovalCount = visitorEntries.filter(v => 
+    v.watchlistMatch && v.approvalStatus === 'pending'
+  ).length;
+
   // Watchlist functions
-  const addWatchlistEntry = (entry: Omit<WatchlistEntry, 'id' | 'dateAdded'>) => {
-    const newEntry: WatchlistEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      dateAdded: new Date().toISOString().split('T')[0]
-    };
-    setWatchlistEntries(prev => [...prev, newEntry]);
-    setHasChanges(true);
-  };
-
-  const updateWatchlistEntry = (id: string, updates: Partial<WatchlistEntry>) => {
-    setWatchlistEntries(prev => 
-      prev.map(entry => entry.id === id ? { ...entry, ...updates } : entry)
-    );
-    setHasChanges(true);
-  };
-
-  const deleteWatchlistEntry = (id: string) => {
-    setWatchlistEntries(prev => prev.filter(entry => entry.id !== id));
-    setHasChanges(true);
-  };
-
   const searchWatchlist = (query: string): WatchlistEntry[] => {
     if (!query.trim()) return watchlistEntries;
     
@@ -278,36 +325,72 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     return watchlistEntries.filter(entry =>
       entry.firstName.toLowerCase().includes(lowercaseQuery) ||
       entry.lastName.toLowerCase().includes(lowercaseQuery) ||
-      entry.email.toLowerCase().includes(lowercaseQuery) ||
-      entry.phone.includes(query) ||
-      entry.reason.toLowerCase().includes(lowercaseQuery)
+      entry.primaryEmail.toLowerCase().includes(lowercaseQuery) ||
+      entry.notes.toLowerCase().includes(lowercaseQuery)
     );
+  };
+
+  const addToWatchlist = (entry: any): WatchlistEntry => {
+    const newEntry: WatchlistEntry = {
+      id: Date.now().toString(),
+      firstName: entry.firstName,
+      lastName: entry.lastName,
+      alternativeFirstNames: entry.alternativeFirstNames || [],
+      alternativeLastNames: entry.alternativeLastNames || [],
+      primaryEmail: entry.primaryEmail,
+      additionalEmails: entry.additionalEmails || [],
+      primaryPhone: entry.primaryPhone,
+      additionalPhones: entry.additionalPhones || [],
+      levelId: entry.levelId,
+      notes: entry.notes,
+      reportedBy: entry.reportedBy,
+      lastUpdated: new Date().toLocaleDateString(),
+      attachments: entry.attachments || [],
+      aliases: [...(entry.alternativeFirstNames || []), ...(entry.alternativeLastNames || [])]
+    };
+    
+    setWatchlistEntries(prev => [...prev, newEntry]);
+    return newEntry;
+  };
+
+  const updateWatchlistEntry = (id: string, updates: any) => {
+    setWatchlistEntries(prev => 
+      prev.map(entry => entry.id === id ? { ...entry, ...updates } : entry)
+    );
+  };
+
+  const removeFromWatchlist = (id: string) => {
+    setWatchlistEntries(prev => prev.filter(entry => entry.id !== id));
+  };
+
+  const getWatchlistEntryById = (id: string): WatchlistEntry | undefined => {
+    return watchlistEntries.find(entry => entry.id === id);
+  };
+
+  const getWatchlistLevelName = (levelId: string): string => {
+    const level = visitorConfiguration.watchlistLevels.find(l => l.id === levelId);
+    return level ? level.name : 'Unknown';
+  };
+
+  const getWatchlistLevelColor = (levelId: string): string => {
+    const level = visitorConfiguration.watchlistLevels.find(l => l.id === levelId);
+    if (!level) return 'bg-gray-100 text-gray-800';
+    
+    switch (level.color) {
+      case 'red':
+        return 'bg-red-100 text-red-800';
+      case 'yellow':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getWatchlistLevelById = (levelId: string): WatchlistLevel | undefined => {
+    return visitorConfiguration.watchlistLevels.find(l => l.id === levelId);
   };
 
   // Visitor functions
-  const addVisitor = (visitor: Omit<VisitorEntry, 'id' | 'checkInTime' | 'status'>) => {
-    const matchResult = checkWatchlistMatch(visitor);
-    
-    const newVisitor: VisitorEntry = {
-      ...visitor,
-      id: Date.now().toString(),
-      checkInTime: new Date().toISOString(),
-      status: matchResult.isMatch ? 'pending-approval' : 'checked-in',
-      watchlistMatch: matchResult.isMatch,
-      matchedEntries: matchResult.matchedEntries
-    };
-    
-    setVisitorEntries(prev => [...prev, newVisitor]);
-    setHasChanges(true);
-  };
-
-  const updateVisitor = (id: string, updates: Partial<VisitorEntry>) => {
-    setVisitorEntries(prev =>
-      prev.map(visitor => visitor.id === id ? { ...visitor, ...updates } : visitor)
-    );
-    setHasChanges(true);
-  };
-
   const searchVisitors = (query: string): VisitorEntry[] => {
     if (!query.trim()) return visitorEntries;
     
@@ -315,158 +398,267 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     return visitorEntries.filter(visitor =>
       visitor.name.toLowerCase().includes(lowercaseQuery) ||
       visitor.email.toLowerCase().includes(lowercaseQuery) ||
-      visitor.company.toLowerCase().includes(lowercaseQuery) ||
       visitor.host.toLowerCase().includes(lowercaseQuery) ||
-      visitor.hostCompany.toLowerCase().includes(lowercaseQuery) ||
-      visitor.phone.includes(query)
+      visitor.hostCompany.toLowerCase().includes(lowercaseQuery)
     );
+  };
+
+  const addVisitor = (visitor: any): VisitorEntry => {
+    const newVisitor: VisitorEntry = {
+      id: Date.now().toString(),
+      ...visitor
+    };
+    
+    setVisitorEntries(prev => [...prev, newVisitor]);
+    return newVisitor;
+  };
+
+  const updateVisitorStatus = (id: string, status: string) => {
+    setVisitorEntries(prev =>
+      prev.map(visitor => visitor.id === id ? { ...visitor, status: status as any } : visitor)
+    );
+  };
+
+  const getVisitorById = (id: string): VisitorEntry | undefined => {
+    return visitorEntries.find(visitor => visitor.id === id);
+  };
+
+  const getPendingApprovalVisitors = (): VisitorEntry[] => {
+    return visitorEntries.filter(v => v.watchlistMatch && v.approvalStatus === 'pending');
   };
 
   const approveVisitor = (id: string, approvedBy: string) => {
     setVisitorEntries(prev =>
       prev.map(visitor =>
         visitor.id === id
-          ? {
-              ...visitor,
-              status: 'approved' as const,
-              approvedBy,
-              approvalTime: new Date().toISOString()
-            }
+          ? { ...visitor, approvalStatus: 'approved' as const, approvedBy, status: 'Validated' }
           : visitor
       )
     );
-    setHasChanges(true);
+
+    // Send email notification
+    const visitor = getVisitorById(id);
+    if (visitor) {
+      const email: SentEmail = {
+        id: Date.now().toString(),
+        visitorName: visitor.name,
+        hostName: visitor.host,
+        hostEmail: visitor.hostEmail,
+        subject: `Visitor Approved: ${visitor.name}`,
+        body: `Dear ${visitor.host},\n\nYour visitor ${visitor.name} has been approved for entry. They may now proceed with their scheduled visit.\n\nBest regards,\nSecurity Team`,
+        action: 'approved',
+        sentAt: new Date().toISOString()
+      };
+      setSentEmails(prev => [...prev, email]);
+    }
   };
 
-  const denyVisitor = (id: string, deniedBy: string, reason: string) => {
+  const denyVisitor = (id: string, deniedBy: string) => {
     setVisitorEntries(prev =>
       prev.map(visitor =>
         visitor.id === id
-          ? {
-              ...visitor,
-              status: 'denied' as const,
-              deniedBy,
-              denialTime: new Date().toISOString(),
-              denialReason: reason
-            }
+          ? { ...visitor, approvalStatus: 'denied' as const, deniedBy, status: 'Canceled' }
           : visitor
       )
     );
-    setHasChanges(true);
+
+    // Send email notification
+    const visitor = getVisitorById(id);
+    if (visitor) {
+      const email: SentEmail = {
+        id: Date.now().toString(),
+        visitorName: visitor.name,
+        hostName: visitor.host,
+        hostEmail: visitor.hostEmail,
+        subject: `Visitor Denied: ${visitor.name}`,
+        body: `Dear ${visitor.host},\n\nYour visitor ${visitor.name} has been denied entry due to security concerns. Please contact security for more information.\n\nBest regards,\nSecurity Team`,
+        action: 'denied',
+        sentAt: new Date().toISOString()
+      };
+      setSentEmails(prev => [...prev, email]);
+    }
   };
 
-  const checkOutVisitor = (id: string) => {
+  const updateVisitorWatchlistStatus = (id: string, hasMatch: boolean, levelId?: string) => {
     setVisitorEntries(prev =>
       prev.map(visitor =>
         visitor.id === id
-          ? {
-              ...visitor,
-              status: 'checked-out' as const,
-              checkOutTime: new Date().toISOString()
-            }
+          ? { ...visitor, watchlistMatch: hasMatch, watchlistLevelId: levelId }
           : visitor
       )
     );
-    setHasChanges(true);
   };
 
-  // Rules functions
-  const updateWatchlistRules = (rules: WatchlistRuleGroup[]) => {
-    setWatchlistRules(rules);
-    setHasChanges(true);
+  // Watchlist matching functions
+  const checkWatchlistMatch = (firstName: string, lastName: string): WatchlistEntry | null => {
+    return watchlistEntries.find(entry => 
+      entry.firstName.toLowerCase() === firstName.toLowerCase() &&
+      entry.lastName.toLowerCase() === lastName.toLowerCase()
+    ) || null;
+  };
+
+  const checkWatchlistMatchWithRules = (visitor: any): WatchlistEntry | null => {
+    // Simple implementation - check by name
+    const [firstName, ...lastNameParts] = visitor.name?.split(' ') || [];
+    const lastName = lastNameParts.join(' ');
+    
+    return checkWatchlistMatch(firstName || '', lastName || '');
+  };
+
+  const getWatchlistEntryForVisitor = (visitorId: string): WatchlistEntry | null => {
+    const visitor = getVisitorById(visitorId);
+    if (!visitor || !visitor.watchlistMatch) return null;
+    
+    return checkWatchlistMatchWithRules(visitor);
+  };
+
+  const getMatchedFields = (visitorName: string, visitorEmail: string, entry: WatchlistEntry): string[] => {
+    const fields: string[] = [];
+    
+    const [firstName, ...lastNameParts] = visitorName.split(' ');
+    const lastName = lastNameParts.join(' ');
+    
+    if (entry.firstName.toLowerCase() === firstName?.toLowerCase()) {
+      fields.push('firstName');
+    }
+    if (entry.lastName.toLowerCase() === lastName?.toLowerCase()) {
+      fields.push('lastName');
+    }
+    if (entry.primaryEmail.toLowerCase() === visitorEmail?.toLowerCase()) {
+      fields.push('email');
+    }
+    
+    return fields;
   };
 
   // Configuration functions
   const updateVisitorConfiguration = (config: Partial<VisitorConfigurationType>) => {
     setVisitorConfiguration(prev => ({ ...prev, ...config }));
-    setHasChanges(true);
   };
 
-  const checkWatchlistMatch = (visitor: Partial<VisitorEntry>): { isMatch: boolean; matchedEntries: string[] } => {
-    const matchedEntries: string[] = [];
-    
-    for (const entry of watchlistEntries) {
-      if (entry.status !== 'active') continue;
-      
-      // Check each rule group
-      for (const group of watchlistRules) {
-        if (group.rules.length === 0) continue;
-        
-        let groupMatch = group.logic === 'AND';
-        
-        for (const rule of group.rules) {
-          let ruleMatch = false;
-          
-          const visitorValue = visitor[rule.field as keyof VisitorEntry]?.toString().toLowerCase() || '';
-          const entryValue = entry[rule.field]?.toLowerCase() || '';
-          
-          switch (rule.operator) {
-            case 'exact':
-              ruleMatch = visitorValue === entryValue;
-              break;
-            case 'contains':
-              ruleMatch = rule.value ? visitorValue.includes(rule.value.toLowerCase()) : false;
-              break;
-            case 'partial':
-              ruleMatch = visitorValue.includes(entryValue) || entryValue.includes(visitorValue);
-              break;
-          }
-          
-          if (group.logic === 'AND') {
-            groupMatch = groupMatch && ruleMatch;
-          } else {
-            groupMatch = groupMatch || ruleMatch;
-          }
-        }
-        
-        if (groupMatch) {
-          matchedEntries.push(entry.id);
-          break;
-        }
-      }
-    }
-    
-    return {
-      isMatch: matchedEntries.length > 0,
-      matchedEntries
+  // Email functions
+  const getSentEmails = (): SentEmail[] => {
+    return sentEmails;
+  };
+
+  const clearSentEmails = () => {
+    setSentEmails([]);
+  };
+
+  // Rule management functions
+  const addWatchlistRuleGroup = () => {
+    const newGroup: WatchlistRuleGroup = {
+      id: `group-${Date.now()}`,
+      name: `Rule Group ${visitorConfiguration.watchlistRules.length + 1}`,
+      rules: []
     };
+    
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: [...prev.watchlistRules, newGroup]
+    }));
   };
 
-  // Save function
-  const saveConfiguration = async (): Promise<void> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setHasChanges(false);
+  const removeWatchlistRuleGroup = (groupId: string) => {
+    if (groupId === 'default-group') return;
+    
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.filter(group => group.id !== groupId)
+    }));
+  };
+
+  const addRuleToGroup = (groupId: string) => {
+    const newRule: WatchlistRule = {
+      id: `rule-${Date.now()}`,
+      parameter: 'firstName',
+      type: 'exact'
+    };
+    
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId
+          ? { ...group, rules: [...group.rules, newRule] }
+          : group
+      )
+    }));
+  };
+
+  const removeRuleFromGroup = (groupId: string, ruleId: string) => {
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId
+          ? { ...group, rules: group.rules.filter(rule => rule.id !== ruleId) }
+          : group
+      )
+    }));
+  };
+
+  const updateRule = (groupId: string, ruleId: string, updates: Partial<WatchlistRule>) => {
+    setVisitorConfiguration(prev => ({
+      ...prev,
+      watchlistRules: prev.watchlistRules.map(group =>
+        group.id === groupId
+          ? {
+              ...group,
+              rules: group.rules.map(rule =>
+                rule.id === ruleId ? { ...rule, ...updates } : rule
+              )
+            }
+          : group
+      )
+    }));
   };
 
   const value: WatchlistContextType = {
     // State
     watchlistEntries,
-    setWatchlistEntries,
     visitorEntries,
-    setVisitorEntries,
-    watchlistRules,
-    setWatchlistRules,
     visitorConfiguration,
-    setVisitorConfiguration,
-    hasChanges,
-    setHasChanges,
+    sentEmails,
+    pendingApprovalCount,
     
-    // Functions
-    addWatchlistEntry,
-    updateWatchlistEntry,
-    deleteWatchlistEntry,
+    // Watchlist functions
     searchWatchlist,
-    addVisitor,
-    updateVisitor,
+    addToWatchlist,
+    updateWatchlistEntry,
+    removeFromWatchlist,
+    getWatchlistEntryById,
+    getWatchlistLevelName,
+    getWatchlistLevelColor,
+    getWatchlistLevelById,
+    
+    // Visitor functions
     searchVisitors,
+    addVisitor,
+    updateVisitorStatus,
+    getVisitorById,
+    getPendingApprovalVisitors,
     approveVisitor,
     denyVisitor,
-    checkOutVisitor,
-    updateWatchlistRules,
+    updateVisitorWatchlistStatus,
+    
+    // Watchlist matching
     checkWatchlistMatch,
+    checkWatchlistMatchWithRules,
+    getWatchlistEntryForVisitor,
+    getMatchedFields,
+    
+    // Configuration
     updateVisitorConfiguration,
-    saveConfiguration
+    
+    // Email functions
+    getSentEmails,
+    clearSentEmails,
+    
+    // Rule management
+    addWatchlistRuleGroup,
+    removeWatchlistRuleGroup,
+    addRuleToGroup,
+    removeRuleFromGroup,
+    updateRule
   };
 
   return (
