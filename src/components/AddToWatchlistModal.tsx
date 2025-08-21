@@ -84,7 +84,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistModalProps> = ({
         primaryPhone: '',
         additionalEmails: [],
         additionalPhones: [],
-        level: 'High risk',
+        levelId: 'high-risk',
         notes: '',
         reportedBy: '',
         attachments: []
@@ -600,12 +600,12 @@ const AddToWatchlistModal: React.FC<AddToWatchlistModalProps> = ({
             </label>
             <div className="relative">
               <select
-                value={formData.level}
-                onChange={(e) => setFormData(prev => ({ ...prev, level: e.target.value as 'High risk' }))}
+                value={formData.levelId}
+                onChange={(e) => setFormData(prev => ({ ...prev, levelId: e.target.value as 'high-risk' }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-gray-50"
                 disabled
               >
-                <option value="High risk">High risk</option>
+                <option value="high-risk">High risk</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
             </div>
