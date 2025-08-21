@@ -632,19 +632,6 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     return stored ? JSON.parse(stored) : [];
   });
 
-  // Calculate pending approval count based on watchlist configuration
-  const pendingApprovalCount = visitorEntries.filter(visitor => {
-    if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
-    
-    const level = getWatchlistLevelById(visitor.watchlistLevelId);
-    const requiresApproval = level?.requiresManualApproval || false;
-    
-    // Check if visitor needs approval and is still pending
-    return requiresApproval && 
-           visitor.status === 'Upcoming' && 
-           (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
-  }).length;
-
   const [visitorConfiguration, setVisitorConfiguration] = useState<VisitorConfiguration>({
     manualValidation: true,
     earlyCheckinMinutes: 15,
@@ -699,6 +686,21 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     const level = getWatchlistLevelById(id);
     return level ? level.name : id; // Fallback to ID if level not found
   };
+
+  // Calculate pending approval count based on watchlist configuration
+  const pendingApprovalCount = React.useMemo(() => {
+    return visitorEntries.filter(visitor => {
+      if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
+      
+      const level = getWatchlistLevelById(visitor.watchlistLevelId);
+      const requiresApproval = level?.requiresManualApproval || false;
+      
+      // Check if visitor needs approval and is still pending
+      return requiresApproval && 
+             visitor.status === 'Upcoming' && 
+             (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
+    }).length;
+  }, [visitorEntries, visitorConfiguration.watchlistLevels]);
 
   const getWatchlistLevelColor = (id: string): string => {
     const level = getWatchlistLevelById(id);
