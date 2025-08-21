@@ -1323,7 +1323,7 @@ Building Security Team`
       approveVisitor,
       denyVisitor,
       getSentEmails,
-      clearSentEmails
+      clearSentEmails,
       addWatchlistRuleGroup,
       removeWatchlistRuleGroup,
       updateWatchlistRuleGroup,
