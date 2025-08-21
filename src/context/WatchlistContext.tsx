@@ -585,7 +585,11 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       date: 'June 17, 2025',
       arrival: '10:00 AM CDT',
       departure: '3:00 PM CDT',
-      host: 'Liz Tenant',
+      host: '
+    }
+  ]
+  )
+}Liz Tenant',
       hostEmail: 'liz.tenant@30eastmcdonald.com',
       hostPhone: '555-0209 ex. 9001',
       hostCompany: '30 East McDonald',
