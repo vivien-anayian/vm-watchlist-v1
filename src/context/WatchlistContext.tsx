@@ -62,6 +62,7 @@ export interface WatchlistRule {
   id: string;
   parameter: 'firstName' | 'lastName' | 'email' | 'phone';
   type: 'exact' | 'contains' | 'partial';
+  value?: string; // For 'contains' type, stores the text to search for
 }
 
 export interface WatchlistRuleGroup {
@@ -746,9 +747,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const getWatchlistLevelColor = (id: string): string => {
     const level = getWatchlistLevelById(id);
-    if (!level) return 'bg-gray-100 text-gray-800';
-    
-    switch (level.color) {
+        if (!rule.value) return false;
+        const searchValue = rule.value.toLowerCase();
+        return watchlistValues.some(wValue => wValue.includes(searchValue)) ||
+               visitorValue.includes(searchValue);
       case 'red':
         return 'bg-red-100 text-red-800';
       case 'yellow':
@@ -1332,7 +1334,8 @@ Building Security Team`
     const newRule: WatchlistRule = {
       id: `rule-${Date.now()}`,
       parameter: 'firstName',
-      type: 'exact'
+      type: 'exact',
+      value: ''
     };
     
     setVisitorConfiguration(prev => ({
