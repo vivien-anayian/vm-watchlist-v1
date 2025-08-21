@@ -77,6 +77,7 @@ interface WatchlistContextType {
   // Visitor functions
   addVisitor: (visitor: Omit<VisitorEntry, 'id' | 'checkInTime' | 'status'>) => void;
   updateVisitor: (id: string, updates: Partial<VisitorEntry>) => void;
+  searchVisitors: (query: string) => VisitorEntry[];
   approveVisitor: (id: string, approvedBy: string) => void;
   denyVisitor: (id: string, deniedBy: string, reason: string) => void;
   checkOutVisitor: (id: string) => void;
@@ -256,6 +257,20 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     setHasChanges(true);
   };
 
+  const searchVisitors = (query: string): VisitorEntry[] => {
+    if (!query.trim()) return visitorEntries;
+    
+    const lowercaseQuery = query.toLowerCase();
+    return visitorEntries.filter(visitor =>
+      visitor.name.toLowerCase().includes(lowercaseQuery) ||
+      visitor.email.toLowerCase().includes(lowercaseQuery) ||
+      visitor.company.toLowerCase().includes(lowercaseQuery) ||
+      visitor.host.toLowerCase().includes(lowercaseQuery) ||
+      visitor.hostCompany.toLowerCase().includes(lowercaseQuery) ||
+      visitor.phone.includes(query)
+    );
+  };
+
   const approveVisitor = (id: string, approvedBy: string) => {
     setVisitorEntries(prev =>
       prev.map(visitor =>
@@ -385,6 +400,7 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     searchWatchlist,
     addVisitor,
     updateVisitor,
+    searchVisitors,
     approveVisitor,
     denyVisitor,
     checkOutVisitor,
