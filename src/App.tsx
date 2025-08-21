@@ -10,6 +10,9 @@ import AddToWatchlistPage from './pages/AddToWatchlistPage';
 import CreateNewVisit from './pages/CreateNewVisit';
 import VisitorConfiguration from './pages/VisitorConfiguration';
 import { WatchlistProvider, useWatchlist } from './context/WatchlistContext';
+import { useToast } from './hooks/useToast';
+import ApprovalConfirmationModal from './components/ApprovalConfirmationModal';
+import { useState } from 'react';
 
 // Avatar Component
 const Avatar: React.FC<{ name: string; className?: string }> = ({ name, className = "w-10 h-10" }) => {

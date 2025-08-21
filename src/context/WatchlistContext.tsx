@@ -428,7 +428,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '1500 Technology Drive, 15 Fl, Austin, TX',
       floor: 'Floor 15',
       watchlistMatch: true,
-      watchlistLevelId: 'high-risk'
+      watchlistLevelId: 'high-risk',
+      requiresApproval: true,
+      approvalStatus: 'pending'
     },
     {
       id: '2',
@@ -446,7 +448,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '1500 Technology Drive, 15 Fl, Austin, TX',
       floor: 'Floor 15',
       watchlistMatch: true,
-      watchlistLevelId: 'high-risk'
+      watchlistLevelId: 'high-risk',
+      requiresApproval: true,
+      approvalStatus: 'pending'
     },
     {
       id: '3',
@@ -464,7 +468,9 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       hostCompanyLocation: '1500 Technology Drive, 15 Fl, Austin, TX',
       floor: 'Floor 15',
       watchlistMatch: true,
-      watchlistLevelId: 'high-risk'
+      watchlistLevelId: 'high-risk',
+      requiresApproval: true,
+      approvalStatus: 'pending'
     },
     {
       id: '4',
