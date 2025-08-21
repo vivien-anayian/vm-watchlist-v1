@@ -40,6 +40,12 @@ export interface VisitorEntry {
   watchlistMatch?: boolean;
   watchlistLevelId?: 'high-risk' | 'medium-risk' | 'low-risk';
   wasWatchlistFlagged?: boolean; // Track if visitor was ever flagged
+  requiresApproval?: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'denied';
+  approvedBy?: string;
+  approvedAt?: string;
+  deniedBy?: string;
+  deniedAt?: string;
 }
 
 export interface WatchlistLevel {
@@ -71,10 +77,24 @@ export interface VisitorConfiguration {
   };
 }
 
+export interface SentEmail {
+  id: string;
+  visitorId: string;
+  hostEmail: string;
+  hostName: string;
+  visitorName: string;
+  action: 'approved' | 'denied';
+  subject: string;
+  body: string;
+  sentAt: string;
+}
+
 interface WatchlistContextType {
   watchlistEntries: WatchlistEntry[];
   visitorEntries: VisitorEntry[];
   visitorConfiguration: VisitorConfiguration;
+  pendingApprovalCount: number;
+  sentEmails: SentEmail[];
   getWatchlistLevelById: (id: string) => WatchlistLevel | undefined;
   getWatchlistLevelName: (id: string) => string;
   getWatchlistLevelColor: (id: string) => string;
@@ -92,6 +112,11 @@ interface WatchlistContextType {
   checkWatchlistMatch: (firstName: string, lastName: string) => WatchlistEntry | null;
   getMatchedFields: (visitorName: string, visitorEmail: string, watchlistEntry: WatchlistEntry) => string[];
   getWatchlistEntryForVisitor: (visitorId: string) => WatchlistEntry | null;
+  getPendingApprovalVisitors: () => VisitorEntry[];
+  approveVisitor: (visitorId: string, approvedBy: string) => void;
+  denyVisitor: (visitorId: string, deniedBy: string) => void;
+  getSentEmails: () => SentEmail[];
+  clearSentEmails: () => void;
 }
 
 const WatchlistContext = createContext<WatchlistContextType | undefined>(undefined);
@@ -602,6 +627,16 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   ]);
 
+  const [sentEmails, setSentEmails] = useState<SentEmail[]>(() => {
+    const stored = localStorage.getItem('sentEmails');
+    return stored ? JSON.parse(stored) : [];
+  });
+
+  // Calculate pending approval count
+  const pendingApprovalCount = visitorEntries.filter(
+    visitor => visitor.requiresApproval && visitor.approvalStatus === 'pending'
+  ).length;
+
   const [visitorConfiguration, setVisitorConfiguration] = useState<VisitorConfiguration>({
     manualValidation: true,
     earlyCheckinMinutes: 15,
@@ -693,6 +728,17 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       ...visitor,
       id: Date.now().toString()
     };
+    
+    // Check if visitor requires approval
+    if (newVisitor.watchlistMatch && newVisitor.watchlistLevelId) {
+      const level = getWatchlistLevelById(newVisitor.watchlistLevelId);
+      if (level?.requiresManualApproval) {
+        newVisitor.requiresApproval = true;
+        newVisitor.approvalStatus = 'pending';
+        newVisitor.status = 'Upcoming'; // Keep as upcoming but flag for approval
+      }
+    }
+    
     // Add to the beginning of the array to show at top
     setVisitorEntries(prev => [newVisitor, ...prev]);
     return newVisitor;
@@ -853,11 +899,142 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     return checkWatchlistMatch(firstName, lastName);
   };
 
+  // Email content generators
+  const generateApprovalEmailContent = (visitor: VisitorEntry): { subject: string; body: string } => ({
+    subject: `Visitor Approved - ${visitor.name}`,
+    body: `Dear ${visitor.host},
+
+Your visitor ${visitor.name} has been approved for entry.
+
+Visit Details:
+• Date: ${visitor.date}
+• Time: ${visitor.arrival} - ${visitor.departure}
+• Floor: ${visitor.floor}
+• Company: ${visitor.hostCompany}
+
+The visitor can now proceed with their scheduled visit.
+
+Best regards,
+Building Security Team`
+  });
+
+  const generateDenialEmailContent = (visitor: VisitorEntry): { subject: string; body: string } => ({
+    subject: `Visitor Access Denied - ${visitor.name}`,
+    body: `Dear ${visitor.host},
+
+Unfortunately, your visitor ${visitor.name} has been denied entry due to security concerns.
+
+Visit Details:
+• Date: ${visitor.date}
+• Time: ${visitor.arrival} - ${visitor.departure}
+• Visitor: ${visitor.name}
+
+Please contact building security for more information if you have questions about this decision.
+
+Best regards,
+Building Security Team`
+  });
+
+  // Send host notification email (simulated)
+  const sendHostNotification = (visitor: VisitorEntry, action: 'approved' | 'denied') => {
+    const emailContent = action === 'approved' 
+      ? generateApprovalEmailContent(visitor)
+      : generateDenialEmailContent(visitor);
+    
+    // Create email record
+    const email: SentEmail = {
+      id: Date.now().toString(),
+      visitorId: visitor.id,
+      hostEmail: visitor.hostEmail,
+      hostName: visitor.host,
+      visitorName: visitor.name,
+      action,
+      subject: emailContent.subject,
+      body: emailContent.body,
+      sentAt: new Date().toISOString()
+    };
+    
+    // Store email in localStorage for demo
+    const updatedEmails = [...sentEmails, email];
+    setSentEmails(updatedEmails);
+    localStorage.setItem('sentEmails', JSON.stringify(updatedEmails));
+    
+    // Log for debugging
+    console.log(`[EMAIL SENT]`, {
+      to: visitor.hostEmail,
+      subject: emailContent.subject,
+      body: emailContent.body
+    });
+  };
+
+  const getPendingApprovalVisitors = (): VisitorEntry[] => {
+    return visitorEntries.filter(
+      visitor => visitor.requiresApproval && visitor.approvalStatus === 'pending'
+    );
+  };
+
+  const approveVisitor = (visitorId: string, approvedBy: string) => {
+    setVisitorEntries(prev => 
+      prev.map(visitor => {
+        if (visitor.id === visitorId) {
+          const updatedVisitor = {
+            ...visitor,
+            approvalStatus: 'approved' as const,
+            approvedBy,
+            approvedAt: new Date().toISOString(),
+            watchlistMatch: false, // Remove watchlist flag after approval
+            requiresApproval: false
+          };
+          
+          // Send host notification
+          sendHostNotification(updatedVisitor, 'approved');
+          
+          return updatedVisitor;
+        }
+        return visitor;
+      })
+    );
+  };
+
+  const denyVisitor = (visitorId: string, deniedBy: string) => {
+    setVisitorEntries(prev => 
+      prev.map(visitor => {
+        if (visitor.id === visitorId) {
+          const updatedVisitor = {
+            ...visitor,
+            status: 'Canceled' as const,
+            approvalStatus: 'denied' as const,
+            deniedBy,
+            deniedAt: new Date().toISOString(),
+            requiresApproval: false
+          };
+          
+          // Send host notification
+          sendHostNotification(updatedVisitor, 'denied');
+          
+          return updatedVisitor;
+        }
+        return visitor;
+      })
+    );
+  };
+
+  const getSentEmails = (): SentEmail[] => {
+    return sentEmails.sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+  };
+
+  const clearSentEmails = () => {
+    setSentEmails([]);
+    localStorage.removeItem('sentEmails');
+  };
+
   return (
     <WatchlistContext.Provider value={{
       watchlistEntries,
       visitorEntries,
       visitorConfiguration,
+      pendingApprovalCount,
+      sentEmails,
       getWatchlistLevelById,
       getWatchlistLevelName,
       getWatchlistLevelColor,
@@ -874,7 +1051,12 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
       updateVisitorConfiguration,
       checkWatchlistMatch,
       getMatchedFields,
-      getWatchlistEntryForVisitor
+      getWatchlistEntryForVisitor,
+      getPendingApprovalVisitors,
+      approveVisitor,
+      denyVisitor,
+      getSentEmails,
+      clearSentEmails
     }}>
       {children}
     </WatchlistContext.Provider>

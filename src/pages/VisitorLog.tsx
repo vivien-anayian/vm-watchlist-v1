@@ -10,21 +10,29 @@ import {
   ChevronRight,
   Lock,
   ChevronUp,
+  X,
 } from 'lucide-react';
 import { useWatchlist } from '../context/WatchlistContext';
 import Toast from '../components/Toast';
 import { useToast } from '../hooks/useToast';
 import StatusChangeConfirmationModal from '../components/StatusChangeConfirmationModal';
+import PendingApprovalTab from '../components/PendingApprovalTab';
 
 type SortField = 'status' | 'date' | 'arrival' | 'departure' | 'name' | 'watchlist' | 'host' | 'hostCompany' | 'floor' | 'id';
 type SortDirection = 'asc' | 'desc';
 
 const VisitorLog: React.FC = () => {
-  const { searchVisitors, updateVisitorStatus, getWatchlistLevelName, getWatchlistLevelColor } = useWatchlist();
+  const { 
+    searchVisitors, 
+    updateVisitorStatus, 
+    getWatchlistLevelName, 
+    getWatchlistLevelColor,
+    pendingApprovalCount
+  } = useWatchlist();
   const { toast, showToast, hideToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'scheduled' | 'past'>('scheduled');
+  const [activeTab, setActiveTab] = useState<'scheduled' | 'past' | 'pending'>('scheduled');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredVisitors, setFilteredVisitors] = useState(searchVisitors(''));
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
@@ -38,6 +46,8 @@ const VisitorLog: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [watchlistMatchFilter, setWatchlistMatchFilter] = useState<string>('');
+
+  const [showApprovalAlert, setShowApprovalAlert] = useState(true);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -225,6 +235,36 @@ const VisitorLog: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Approval Alert Banner */}
+      {pendingApprovalCount > 0 && showApprovalAlert && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-yellow-600 text-sm">⚠</span>
+              </div>
+              <div>
+                <span className="text-yellow-800">
+                  {pendingApprovalCount} new visit{pendingApprovalCount > 1 ? 's are' : ' is'} pending approval as potential match{pendingApprovalCount > 1 ? 'es' : ''} against the Watchlist.{' '}
+                </span>
+                <button
+                  onClick={() => setActiveTab('pending')}
+                  className="text-yellow-800 underline hover:text-yellow-900 font-medium"
+                >
+                  Review now.
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowApprovalAlert(false)}
+              className="text-yellow-600 hover:text-yellow-800"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-gray-900">Visitor log</h1>
@@ -261,11 +301,27 @@ const VisitorLog: React.FC = () => {
           >
             Past visits
           </button>
+          <button
+            onClick={() => setActiveTab('pending')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm relative ${
+              activeTab === 'pending'
+                ? 'border-indigo-500 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            Pending approval
+            {pendingApprovalCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {pendingApprovalCount}
+              </span>
+            )}
+          </button>
         </nav>
       </div>
 
-      {/* Filters */}
-      <div className="space-y-4">
+      {/* Filters - Only show for scheduled/past tabs */}
+      {activeTab !== 'pending' && (
+        <div className="space-y-4">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-end">
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -349,9 +405,13 @@ const VisitorLog: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Content based on active tab */}
+      {activeTab === 'pending' ? (
+        <PendingApprovalTab />
+      ) : (
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
@@ -578,6 +638,7 @@ const VisitorLog: React.FC = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Modals */}
       <StatusChangeConfirmationModal
