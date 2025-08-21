@@ -26,7 +26,7 @@ const AddToWatchlistPage: React.FC = () => {
     primaryPhone: '',
     additionalEmails: [] as string[],
     additionalPhones: [] as string[],
-    level: 'High risk' as const,
+    levelId: 'high-risk' as const,
     notes: '',
     reportedBy: '',
     attachments: [] as Array<{ id: string; name: string; url: string; uploadedAt: string }>
@@ -167,7 +167,7 @@ const AddToWatchlistPage: React.FC = () => {
     // If this was promoted from a visitor, update the visitor's watchlist status
     const visitorId = searchParams.get('visitorId');
     if (visitorId) {
-      updateVisitorWatchlistStatus(visitorId, true, 'High risk');
+      updateVisitorWatchlistStatus(visitorId, true, newEntry.levelId);
     }
     
     // Navigate to watchlist page with success message
@@ -625,11 +625,11 @@ const AddToWatchlistPage: React.FC = () => {
           </label>
           <div className="relative">
             <select
-              value={formData.level}
-              onChange={(e) => handleFieldChange('level', e.target.value)}
+              value={formData.levelId}
+              onChange={(e) => handleFieldChange('levelId', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
             >
-              <option value="High risk">High risk</option>
+              <option value="high-risk">High risk</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>

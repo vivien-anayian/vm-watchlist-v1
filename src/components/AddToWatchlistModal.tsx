@@ -29,7 +29,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistModalProps> = ({
     primaryPhone: '',
     additionalEmails: [] as string[],
     additionalPhones: [] as string[],
-    level: 'High risk' as const,
+    levelId: 'high-risk' as const,
     notes: '',
     reportedBy: '',
     attachments: [] as Array<{ id: string; name: string; url: string; uploadedAt: string }>
@@ -55,7 +55,7 @@ const AddToWatchlistModal: React.FC<AddToWatchlistModalProps> = ({
           primaryPhone: entry.primaryPhone,
           additionalEmails: entry.additionalEmails,
           additionalPhones: entry.additionalPhones,
-          level: 'High risk' as const,
+          levelId: entry.levelId,
           notes: entry.notes,
           reportedBy: entry.reportedBy,
           attachments: entry.attachments
