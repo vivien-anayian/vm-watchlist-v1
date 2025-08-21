@@ -109,6 +109,59 @@ const VisitorConfiguration: React.FC = () => {
       level.id === levelId ? { ...level, [field]: value } : level
     );
     handleConfigChange({ watchlistLevels: updatedLevels });
+  };
+
+  const toggleNotificationRecipient = (levelId: string, recipientId: string) => {
+    const updatedLevels = localConfig.watchlistLevels.map(level => {
+      if (level.id === levelId) {
+        const recipients = level.notificationRecipients.includes(recipientId)
+          ? level.notificationRecipients.filter(id => id !== recipientId)
+          : [...level.notificationRecipients, recipientId];
+        return { ...level, notificationRecipients: recipients };
+      }
+      return level;
+    });
+    handleConfigChange({ watchlistLevels: updatedLevels });
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Visitor Configuration</h1>
+          <p className="text-gray-600 mt-1">Configure visitor management settings for your property</p>
+        </div>
+        <div className="flex space-x-3">
+          {hasChanges && (
+            <>
+              <button
+                onClick={handleResetAll}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Reset all
+              </button>
+              <button
+                onClick={handleUndo}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Undo
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleSave}
+            disabled={!hasChanges}
+            className={`px-4 py-2 text-sm font-medium rounded-lg ${
+              hasChanges
+                ? 'text-white bg-indigo-600 hover:bg-indigo-700'
+                : 'text-gray-400 bg-gray-100 cursor-not-allowed'
+            }`}
+          >
+            Save changes
+          </button>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
