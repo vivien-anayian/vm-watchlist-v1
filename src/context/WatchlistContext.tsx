@@ -690,9 +690,23 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Calculate pending approval count based on watchlist configuration
   const pendingApprovalCount = React.useMemo(() => {
     return visitorEntries.filter(visitor => {
-      if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
+      // Check if visitor has watchlist match and level
+      if (!visitor.watchlistMatch && !visitor.watchlistLevelId) return false;
       
-      const level = getWatchlistLevelById(visitor.watchlistLevelId);
+      // Get the watchlist level - either from visitor or by checking match
+      let level;
+      if (visitor.watchlistLevelId) {
+        level = getWatchlistLevelById(visitor.watchlistLevelId);
+      } else if (visitor.watchlistMatch) {
+        // If visitor has watchlist match but no levelId, check the actual match
+        const [firstName, ...lastNameParts] = visitor.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+        const watchlistEntry = checkWatchlistMatch(firstName, lastName);
+        if (watchlistEntry) {
+          level = getWatchlistLevelById(watchlistEntry.levelId);
+        }
+      }
+      
       const requiresApproval = level?.requiresManualApproval || false;
       
       // Check if visitor needs approval and is still pending
@@ -1104,9 +1118,23 @@ Building Security Team`
 
   const getPendingApprovalVisitors = (): VisitorEntry[] => {
     return visitorEntries.filter(visitor => {
-      if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
+      // Check if visitor has watchlist match
+      if (!visitor.watchlistMatch && !visitor.watchlistLevelId) return false;
       
-      const level = getWatchlistLevelById(visitor.watchlistLevelId);
+      // Get the watchlist level - either from visitor or by checking match
+      let level;
+      if (visitor.watchlistLevelId) {
+        level = getWatchlistLevelById(visitor.watchlistLevelId);
+      } else if (visitor.watchlistMatch) {
+        // If visitor has watchlist match but no levelId, check the actual match
+        const [firstName, ...lastNameParts] = visitor.name.split(' ');
+        const lastName = lastNameParts.join(' ');
+        const watchlistEntry = checkWatchlistMatch(firstName, lastName);
+        if (watchlistEntry) {
+          level = getWatchlistLevelById(watchlistEntry.levelId);
+        }
+      }
+      
       const requiresApproval = level?.requiresManualApproval || false;
       
       // Check if visitor needs approval and is still pending
@@ -1130,8 +1158,20 @@ Building Security Team`
           };
           
           // Send host decision notification if manual approval was required
+          let level;
           if (visitor.watchlistLevelId) {
-            const level = getWatchlistLevelById(visitor.watchlistLevelId);
+            level = getWatchlistLevelById(visitor.watchlistLevelId);
+          } else if (visitor.watchlistMatch) {
+            // Check the actual watchlist match
+            const [firstName, ...lastNameParts] = visitor.name.split(' ');
+            const lastName = lastNameParts.join(' ');
+            const watchlistEntry = checkWatchlistMatch(firstName, lastName);
+            if (watchlistEntry) {
+              level = getWatchlistLevelById(watchlistEntry.levelId);
+            }
+          }
+          
+          if (level) {
             if (level?.requiresManualApproval) {
               sendHostDecisionNotification(updatedVisitor, 'approved');
             }
@@ -1158,8 +1198,20 @@ Building Security Team`
           };
           
           // Send host decision notification if manual approval was required
+          let level;
           if (visitor.watchlistLevelId) {
-            const level = getWatchlistLevelById(visitor.watchlistLevelId);
+            level = getWatchlistLevelById(visitor.watchlistLevelId);
+          } else if (visitor.watchlistMatch) {
+            // Check the actual watchlist match
+            const [firstName, ...lastNameParts] = visitor.name.split(' ');
+            const lastName = lastNameParts.join(' ');
+            const watchlistEntry = checkWatchlistMatch(firstName, lastName);
+            if (watchlistEntry) {
+              level = getWatchlistLevelById(watchlistEntry.levelId);
+            }
+          }
+          
+          if (level) {
             if (level?.requiresManualApproval) {
               sendHostDecisionNotification(updatedVisitor, 'denied');
             }
