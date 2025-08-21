@@ -109,23 +109,6 @@ const VisitorConfiguration: React.FC = () => {
       level.id === levelId ? { ...level, [field]: value } : level
     );
     handleConfigChange({ watchlistLevels: updatedLevels });
-        <div className="flex-1 min-w-0 truncate">
-          <span className={selectedIds.length === 0 ? 'text-gray-500' : 'text-gray-900'}>
-            {getDisplayText()}
-          </span>
-          <button
-            onClick={handleSave}
-            disabled={!hasChanges}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              hasChanges
-                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            Save all
-          </button>
-        </div>
-      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
