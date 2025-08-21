@@ -1388,9 +1388,20 @@ Building Security Team`
   };
 
   const addRuleToGroup = (groupId: string): WatchlistRule => {
+    const group = visitorConfiguration.watchlistRules.find(g => g.id === groupId);
+    if (!group) return;
+    
+    // Get available parameters (not already used in this group)
+    const usedParameters = group.rules.map(rule => rule.parameter);
+    const availableParameters = ['firstName', 'lastName', 'email', 'phone'].filter(
+      param => !usedParameters.includes(param as any)
+    );
+    
+    if (availableParameters.length === 0) return; // No more parameters available
+    
     const newRule: WatchlistRule = {
       id: `rule-${Date.now()}`,
-      parameter: 'firstName',
+      parameter: availableParameters[0] as WatchlistRule['parameter'],
       type: 'exact',
       value: ''
     };

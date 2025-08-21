@@ -37,9 +37,9 @@ const WatchlistRulesManager: React.FC = () => {
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'exact': return 'Exact Match';
-      case 'contains': return 'Contains';
-      case 'partial': return 'Partial Match';
+      case 'exact': return 'is exactly';
+      case 'contains': return 'contains';
+      case 'partial': return 'is';
       default: return type;
     }
   };
@@ -49,20 +49,27 @@ const WatchlistRulesManager: React.FC = () => {
     const type = getTypeLabel(rule.type);
     
     if (rule.type === 'contains' && rule.value) {
-      return `${param} contains "${rule.value}"`;
+      return `${param} ${type} "${rule.value}"`;
     }
-    return `${param} ${type.toLowerCase()}`;
+    return `${param} ${type} match`;
   };
 
   const getGroupDescription = (group: WatchlistRuleGroup) => {
-    if (group.rules.length === 0) return 'No rules defined';
-    if (group.rules.length === 1) return getRuleDescription(group.rules[0]);
+    if (group.rules.length === 0) return 'No conditions set';
     return group.rules.map(rule => getRuleDescription(rule)).join(' AND ');
   };
 
-  const getGroupTitle = (group: WatchlistRuleGroup, index: number) => {
-    if (group.id === 'default-group') return 'Default Group';
-    return `Rule Group ${index}`;
+  const getAvailableParameters = (groupId: string, currentRuleId?: string) => {
+    const group = watchlistRules.find(g => g.id === groupId);
+    if (!group) return ['firstName', 'lastName', 'email', 'phone'];
+    
+    const usedParameters = group.rules
+      .filter(rule => rule.id !== currentRuleId)
+      .map(rule => rule.parameter);
+    
+    return ['firstName', 'lastName', 'email', 'phone'].filter(
+      param => !usedParameters.includes(param as any)
+    );
   };
 
   const handleRuleUpdate = (groupId: string, ruleId: string, updates: Partial<WatchlistRule>) => {
@@ -71,6 +78,13 @@ const WatchlistRulesManager: React.FC = () => {
       updates.value = '';
     }
     updateRule(groupId, ruleId, updates);
+  };
+
+  const handleAddRule = (groupId: string) => {
+    const availableParams = getAvailableParameters(groupId);
+    if (availableParams.length > 0) {
+      addRuleToGroup(groupId);
+    }
   };
 
   return (
@@ -96,40 +110,44 @@ const WatchlistRulesManager: React.FC = () => {
       </div>
 
       {/* Rule Groups */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {watchlistRules.map((group, groupIndex) => {
           const isExpanded = expandedGroups.has(group.id);
-          const groupNumber = group.id === 'default-group' ? 0 : groupIndex;
+          const isDefaultGroup = group.id === 'default-group';
           
           return (
-            <div key={group.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+            <div key={group.id} className="bg-white border border-gray-200 rounded-lg">
               {/* Group Header */}
-              <div className="bg-gray-50 border-b border-gray-200">
+              <div className="border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between p-4">
                   <button
                     onClick={() => toggleGroup(group.id)}
                     className="flex items-center space-x-3 flex-1 text-left"
                   >
-                    <div className="flex items-center space-x-2">
-                      <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
-                      <div className="flex items-center space-x-2">
-                        <div className={`w-3 h-3 rounded-full ${group.id === 'default-group' ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
-                        <h3 className="text-lg font-medium text-gray-900">
-                          {getGroupTitle(group, groupNumber)}
+                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${isDefaultGroup ? 'bg-blue-500' : 'bg-gray-400'}`}></div>
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {isDefaultGroup ? 'Where' : `Or`}
                         </h3>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {getGroupDescription(group)}
+                        </p>
                       </div>
                     </div>
                   </button>
                   
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={() => addRuleToGroup(group.id)}
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      onClick={() => handleAddRule(group.id)}
+                      disabled={getAvailableParameters(group.id).length === 0}
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-white border border-indigo-200 rounded-md hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Plus className="w-4 h-4 mr-1" />
+                      <Plus className="w-3 h-3 mr-1" />
                       Add Rule
                     </button>
-                    {group.id !== 'default-group' && (
+                    {!isDefaultGroup && (
                       <button
                         onClick={() => removeWatchlistRuleGroup(group.id)}
                         className="inline-flex items-center p-1.5 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -140,13 +158,6 @@ const WatchlistRulesManager: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
-                {/* Group Description */}
-                <div className="px-4 pb-3">
-                  <p className="text-sm text-gray-600">
-                    {getGroupDescription(group)}
-                  </p>
-                </div>
               </div>
 
               {/* Group Content */}
@@ -155,28 +166,37 @@ const WatchlistRulesManager: React.FC = () => {
                   {group.rules.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
                       <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="font-medium">No rules defined</p>
+                      <p className="font-medium">No conditions set</p>
                       <p className="text-sm mt-1">Click "Add Rule" to create matching criteria</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {group.rules.map((rule, ruleIndex) => (
-                        <div key={rule.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-start space-x-4">
-                            {/* AND Indicator */}
-                            {ruleIndex > 0 && (
-                              <div className="flex items-center justify-center w-12 h-8 bg-blue-100 text-blue-700 text-xs font-semibold rounded-md border border-blue-200">
-                                AND
+                      <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+                        All of the following are true...
+                      </div>
+                      
+                      {group.rules.map((rule, ruleIndex) => {
+                        const availableParams = getAvailableParameters(group.id, rule.id);
+                        const allParams = ['firstName', 'lastName', 'email', 'phone'];
+                        const selectableParams = [...availableParams, rule.parameter];
+                        
+                        return (
+                          <div key={rule.id} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center space-x-3">
+                              {/* AND Indicator */}
+                              {ruleIndex > 0 && (
+                                <div className="flex items-center justify-center w-10 h-6 bg-blue-100 text-blue-700 text-xs font-semibold rounded border border-blue-200">
+                                  And
+                                </div>
+                              )}
+                              
+                              {/* Where Label */}
+                              <div className="text-sm font-medium text-gray-700 min-w-[50px]">
+                                Where
                               </div>
-                            )}
-                            
-                            {/* Rule Configuration */}
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+
                               {/* Parameter Selection */}
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                  Field to Match
-                                </label>
+                              <div className="min-w-[120px]">
                                 <div className="relative">
                                   <select
                                     value={rule.parameter}
@@ -185,20 +205,18 @@ const WatchlistRulesManager: React.FC = () => {
                                     })}
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
                                   >
-                                    <option value="firstName">First Name</option>
-                                    <option value="lastName">Last Name</option>
-                                    <option value="email">Email</option>
-                                    <option value="phone">Phone</option>
+                                    {selectableParams.map(param => (
+                                      <option key={param} value={param}>
+                                        {getParameterLabel(param)}
+                                      </option>
+                                    ))}
                                   </select>
-                                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                 </div>
                               </div>
 
                               {/* Type Selection */}
-                              <div>
-                                <label className="block text-xs font-medium text-gray-700 mb-1">
-                                  Match Type
-                                </label>
+                              <div className="min-w-[100px]">
                                 <div className="relative">
                                   <select
                                     value={rule.type}
@@ -207,44 +225,32 @@ const WatchlistRulesManager: React.FC = () => {
                                     })}
                                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
                                   >
-                                    <option value="exact">Exact Match</option>
-                                    <option value="contains">Contains</option>
-                                    <option value="partial">Partial Match</option>
+                                    <option value="exact">is exactly</option>
+                                    <option value="contains">contains</option>
+                                    <option value="partial">is</option>
                                   </select>
-                                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                                 </div>
                               </div>
 
-                              {/* Value Input (for contains type) */}
-                              <div>
+                              {/* Value Input */}
+                              <div className="flex-1 min-w-[150px]">
                                 {rule.type === 'contains' ? (
-                                  <>
-                                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                                      Text to Find
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={rule.value || ''}
-                                      onChange={(e) => handleRuleUpdate(group.id, rule.id, { value: e.target.value })}
-                                      placeholder="Enter text to search for..."
-                                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                    />
-                                  </>
+                                  <input
+                                    type="text"
+                                    value={rule.value || ''}
+                                    onChange={(e) => handleRuleUpdate(group.id, rule.id, { value: e.target.value })}
+                                    placeholder="Enter text to search for..."
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                  />
                                 ) : (
-                                  <>
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">
-                                      Value
-                                    </label>
-                                    <div className="w-full px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded-md">
-                                      Auto-matched
-                                    </div>
-                                  </>
+                                  <div className="w-full px-3 py-2 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded-md">
+                                    Auto-matched
+                                  </div>
                                 )}
                               </div>
-                            </div>
 
-                            {/* Remove Rule Button */}
-                            <div className="flex items-start pt-6">
+                              {/* Remove Rule Button */}
                               <button
                                 onClick={() => removeRuleFromGroup(group.id, rule.id)}
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -253,16 +259,16 @@ const WatchlistRulesManager: React.FC = () => {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                          </div>
 
-                          {/* Rule Preview */}
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            <div className="text-xs text-gray-600">
-                              <span className="font-medium">Rule:</span> {getRuleDescription(rule)}
+                            {/* Rule Preview */}
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <div className="text-xs text-gray-600">
+                                <span className="font-medium">Rule:</span> {getRuleDescription(rule)}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -273,13 +279,13 @@ const WatchlistRulesManager: React.FC = () => {
       </div>
 
       {/* Add Group Button */}
-      <div className="flex justify-center pt-4">
+      <div className="flex justify-start">
         <button
           onClick={addWatchlistRuleGroup}
           className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 shadow-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Rule Group
+          Add condition group
         </button>
       </div>
 
