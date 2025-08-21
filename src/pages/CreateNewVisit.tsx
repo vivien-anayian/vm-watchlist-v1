@@ -99,7 +99,12 @@ const CreateNewVisit: React.FC = () => {
     const createdVisitors: CreatedVisitor[] = [];
     
     validVisitors.forEach(visitor => {
-      const watchlistMatch = checkWatchlistMatch(visitor.firstName, visitor.lastName);
+      const watchlistMatch = checkWatchlistMatchWithRules({
+        firstName: visitor.firstName,
+        lastName: visitor.lastName,
+        email: visitor.email,
+        phone: '555-0123' // Default for demo
+      });
       const newVisitor = addVisitor({
         name: `${visitor.firstName} ${visitor.lastName}`,
         email: visitor.email || 'no-email@example.com',

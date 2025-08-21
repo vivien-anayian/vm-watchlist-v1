@@ -979,7 +979,12 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
     const [firstName, ...lastNameParts] = visitor.name.split(' ');
     const lastName = lastNameParts.join(' ');
     
-    return checkWatchlistMatch(firstName, lastName);
+    return checkWatchlistMatchWithRules({
+      firstName,
+      lastName,
+      email: visitor.email,
+      phone: visitor.phone
+    });
   };
 
   // Email content generators for watchlist notifications

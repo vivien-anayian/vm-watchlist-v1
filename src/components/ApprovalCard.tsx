@@ -20,10 +20,15 @@ const ApprovalCard: React.FC<ApprovalCardProps> = ({
   
   // If no entry found but visitor has watchlist match, try to find it by name
   if (!watchlistEntry && visitor.watchlistMatch) {
-    const { checkWatchlistMatch } = useWatchlist();
+    const { checkWatchlistMatchWithRules } = useWatchlist();
     const [firstName, ...lastNameParts] = visitor.name.split(' ');
     const lastName = lastNameParts.join(' ');
-    watchlistEntry = checkWatchlistMatch(firstName, lastName);
+    watchlistEntry = checkWatchlistMatchWithRules({
+      firstName,
+      lastName,
+      email: visitor.email,
+      phone: visitor.phone
+    });
   }
 
   return (

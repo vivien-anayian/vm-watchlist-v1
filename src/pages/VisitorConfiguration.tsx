@@ -5,6 +5,7 @@ import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import SentEmailsList from '../components/SentEmailsList';
+import WatchlistRulesManager from '../components/WatchlistRulesManager';
 
 const VisitorConfiguration: React.FC = () => {
   const { visitorConfiguration, updateVisitorConfiguration, clearSentEmails } = useWatchlist();
