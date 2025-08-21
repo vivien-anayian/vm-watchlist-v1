@@ -115,7 +115,7 @@ const CreateNewVisit: React.FC = () => {
         hostCompanyLocation: '1500 Technology Drive, 15th Floor, Austin, TX',
         floor: `Floor ${floor || '15'}`,
         watchlistMatch: !!watchlistMatch,
-        watchlistLevel: watchlistMatch?.level
+        watchlistLevelId: watchlistMatch?.levelId
       });
       createdVisitors.push(newVisitor);
     });

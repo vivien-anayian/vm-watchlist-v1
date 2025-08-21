@@ -690,7 +690,7 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
   // Calculate pending approval count based on watchlist configuration
   const pendingApprovalCount = React.useMemo(() => {
     return visitorEntries.filter(visitor => {
-      // Check if visitor has watchlist match and level
+      // Must have either watchlist match or level ID
       if (!visitor.watchlistMatch && !visitor.watchlistLevelId) return false;
       
       // Get the watchlist level - either from visitor or by checking match
@@ -707,10 +707,10 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
       }
       
-      const requiresApproval = level?.requiresManualApproval || false;
+      if (!level) return false;
       
       // Check if visitor needs approval and is still pending
-      return requiresApproval && 
+      return level.requiresManualApproval && 
              visitor.status === 'Upcoming' && 
              (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
     }).length;
@@ -768,6 +768,26 @@ export const WatchlistProvider: React.FC<{ children: ReactNode }> = ({ children 
         const watchlistEntry = checkWatchlistMatch(firstName, lastName);
         
         if (watchlistEntry) {
+          sendWatchlistMatchNotification(newVisitor, level, watchlistEntry);
+        }
+      }
+    } else if (newVisitor.watchlistMatch) {
+      // Handle case where watchlistMatch is true but levelId is missing
+      const [firstName, ...lastNameParts] = newVisitor.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+      const watchlistEntry = checkWatchlistMatch(firstName, lastName);
+      
+      if (watchlistEntry) {
+        newVisitor.watchlistLevelId = watchlistEntry.levelId;
+        const level = getWatchlistLevelById(watchlistEntry.levelId);
+        
+        if (level?.requiresManualApproval) {
+          newVisitor.requiresApproval = true;
+          newVisitor.approvalStatus = 'pending';
+        }
+        
+        // Send watchlist match notification if email notifications are enabled
+        if (level?.sendEmailNotifications) {
           sendWatchlistMatchNotification(newVisitor, level, watchlistEntry);
         }
       }
@@ -1118,7 +1138,7 @@ Building Security Team`
 
   const getPendingApprovalVisitors = (): VisitorEntry[] => {
     return visitorEntries.filter(visitor => {
-      // Check if visitor has watchlist match
+      // Must have either watchlist match or level ID
       if (!visitor.watchlistMatch && !visitor.watchlistLevelId) return false;
       
       // Get the watchlist level - either from visitor or by checking match
@@ -1132,13 +1152,21 @@ Building Security Team`
         const watchlistEntry = checkWatchlistMatch(firstName, lastName);
         if (watchlistEntry) {
           level = getWatchlistLevelById(watchlistEntry.levelId);
+          // Update the visitor with the found levelId for consistency
+          setVisitorEntries(prev => 
+            prev.map(v => 
+              v.id === visitor.id 
+                ? { ...v, watchlistLevelId: watchlistEntry.levelId }
+                : v
+            )
+          );
         }
       }
       
-      const requiresApproval = level?.requiresManualApproval || false;
+      if (!level) return false;
       
       // Check if visitor needs approval and is still pending
-      return requiresApproval && 
+      return level.requiresManualApproval && 
              visitor.status === 'Upcoming' && 
              (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
     });

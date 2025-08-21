@@ -14,7 +14,17 @@ const ApprovalCard: React.FC<ApprovalCardProps> = ({
   onDeny
 }) => {
   const { getWatchlistEntryForVisitor } = useWatchlist();
-  const watchlistEntry = getWatchlistEntryForVisitor(visitor.id);
+  
+  // Get watchlist entry - either from stored match or by checking name
+  let watchlistEntry = getWatchlistEntryForVisitor(visitor.id);
+  
+  // If no entry found but visitor has watchlist match, try to find it by name
+  if (!watchlistEntry && visitor.watchlistMatch) {
+    const { checkWatchlistMatch } = useWatchlist();
+    const [firstName, ...lastNameParts] = visitor.name.split(' ');
+    const lastName = lastNameParts.join(' ');
+    watchlistEntry = checkWatchlistMatch(firstName, lastName);
+  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-6">
