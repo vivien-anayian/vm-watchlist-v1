@@ -66,7 +66,18 @@ const PhotoGallery: React.FC<{ attachments: Array<{ id: string; name: string; ur
 // Visitor Details Component
 const VisitorDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getVisitorById, getWatchlistEntryForVisitor, getMatchedFields } = useWatchlist();
+  const { 
+    getVisitorById, 
+    getWatchlistEntryForVisitor, 
+    getMatchedFields, 
+    getWatchlistLevelById,
+    approveVisitor,
+    denyVisitor
+  } = useWatchlist();
+  const { showToast } = useToast();
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'approve' | 'deny' | null>(null);
+  
   const visitor = id ? getVisitorById(id) : null;
   const watchlistEntry = id ? getWatchlistEntryForVisitor(id) : null;
   const { getWatchlistLevelName, getWatchlistLevelColor } = useWatchlist();
@@ -84,6 +95,45 @@ const VisitorDetails: React.FC = () => {
   }
 
   const matchedFields = watchlistEntry ? getMatchedFields(visitor.name, visitor.email, watchlistEntry) : [];
+  
+  // Check if visitor requires manual approval
+  const requiresApproval = () => {
+    if (!visitor.watchlistMatch || !visitor.watchlistLevelId) return false;
+    const level = getWatchlistLevelById(visitor.watchlistLevelId);
+    return level?.requiresManualApproval && 
+           visitor.status === 'Upcoming' && 
+           (!visitor.approvalStatus || visitor.approvalStatus === 'pending');
+  };
+  
+  const handleApprove = () => {
+    setPendingAction('approve');
+    setShowApprovalModal(true);
+  };
+  
+  const handleDeny = () => {
+    setPendingAction('deny');
+    setShowApprovalModal(true);
+  };
+  
+  const confirmAction = () => {
+    if (!pendingAction || !visitor) return;
+    
+    if (pendingAction === 'approve') {
+      approveVisitor(visitor.id, 'Current User');
+      showToast(`${visitor.name} has been approved. Notification sent to ${visitor.hostEmail}`, 'success');
+    } else {
+      denyVisitor(visitor.id, 'Current User');
+      showToast(`${visitor.name} has been denied. Notification sent to ${visitor.hostEmail}`, 'info');
+    }
+    
+    setShowApprovalModal(false);
+    setPendingAction(null);
+  };
+  
+  const closeModal = () => {
+    setShowApprovalModal(false);
+    setPendingAction(null);
+  };
   
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -147,10 +197,26 @@ const VisitorDetails: React.FC = () => {
 
       {/* Watchlist Match Section - Only show if there's a match */}
       {watchlistEntry && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
           <div className="flex items-center space-x-2 mb-4">
             <AlertTriangle className="w-5 h-5 text-yellow-600" />
             <h3 className="text-lg font-medium text-gray-900">Watchlist Match Detected</h3>
+            {requiresApproval() && (
+              <div className="ml-auto flex space-x-3">
+                <button
+                  onClick={handleDeny}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  Deny
+                </button>
+                <button
+                  onClick={handleApprove}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  Approve
+                </button>
+              </div>
+            )}
           </div>
           
           <div className="space-y-4">
@@ -257,6 +323,15 @@ const VisitorDetails: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Approval Confirmation Modal */}
+      <ApprovalConfirmationModal
+        isOpen={showApprovalModal}
+        onClose={closeModal}
+        onConfirm={confirmAction}
+        visitor={visitor}
+        action={pendingAction || 'approve'}
+      />
     </div>
   );
 };
